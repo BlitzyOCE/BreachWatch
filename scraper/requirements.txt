@@ -1,0 +1,29 @@
+# BreachWatch Scraper Dependencies
+
+# RSS Feed Parsing
+feedparser==6.0.11
+
+# HTTP Requests
+requests==2.31.0
+httpx==0.27.0
+
+# Date/Time Utilities
+python-dateutil==2.8.2
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Database (Supabase)
+supabase==2.3.4
+
+# AI Integration (DeepSeek via OpenAI-compatible API)
+openai==1.12.0
+
+# Retry Logic
+backoff==2.2.1
+
+# File Locking for Cache
+filelock==3.13.1
+
+# Data Validation (optional but recommended)
+pydantic==2.6.1

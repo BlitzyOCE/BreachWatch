@@ -1,0 +1,49 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+*.egg-info/
+
+# Scraper cache (IMPORTANT - don't push to GitHub)
+scraper/cache/
+scraper/logs/
+*.json
+!scraper/cache/.gitkeep
+
+# Processed IDs tracking
+scraper/processed_ids.txt
+
+# Node modules
+node_modules/
+.next/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build outputs
+dist/
+build/
+
+# Claude Code and project planning files
+.claude/
+docs/ideas.md
+docs/product.md
+docs/start.md
