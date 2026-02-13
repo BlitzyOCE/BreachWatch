@@ -202,6 +202,22 @@ Return JSON:
 ### 6. main.py
 **Purpose**: Orchestrate the entire scraper workflow
 
+**In-Run Deduplication (added 2026-02-13)**:
+
+Before calling `detect_update()` via AI, `main.py` runs a fast Python-side check using `difflib.SequenceMatcher`:
+
+```python
+FUZZY_MATCH_THRESHOLD = 0.85
+
+def find_in_run_duplicate(company, existing_breaches):
+    for breach in existing_breaches:
+        if _company_similarity(company, breach['company']) >= FUZZY_MATCH_THRESHOLD:
+            return breach
+    return None
+```
+
+If a match is found, the article is forced as an `update` with `confidence=1.0` and the DeepSeek API call is skipped entirely. This handles the case where two articles about the same company arrive in the same RSS run before either is in the database. `detect_update()` alone cannot catch this because it queries the DB, which has neither entry yet.
+
 **Main Workflow**:
 ```python
 def main():
@@ -227,30 +243,35 @@ def main():
     existing_breaches = db_writer.get_existing_breaches(days=90)
 
     # 6. Process Each Article
-    stats = {'new_breaches': 0, 'updates': 0, 'errors': 0}
+    stats = {'breaches_created': 0, 'updates_created': 0, 'duplicates_skipped': 0, 'errors': 0}
 
     for article in new_articles:
         try:
             # Extract structured data
             extracted = ai_processor.extract_breach_data(article)
 
-            # Detect if update or new breach
-            update_check = ai_processor.detect_update(article, existing_breaches)
-
-            if update_check['is_update']:
-                # Write update
-                db_writer.write_breach_update(
-                    extracted,
-                    update_check['related_breach_id'],
-                    article
-                )
-                stats['updates'] += 1
+            # Fast in-run fuzzy check before AI call
+            in_run_match = find_in_run_duplicate(extracted['company'], existing_breaches)
+            if in_run_match:
+                update_check = {'is_update': True, 'related_breach_id': in_run_match['id'], 'confidence': 1.0}
             else:
-                # Write new breach
-                db_writer.write_new_breach(extracted, article)
-                stats['new_breaches'] += 1
+                # Three-way AI classification: NEW_BREACH / GENUINE_UPDATE / DUPLICATE_SOURCE
+                update_check = ai_processor.detect_update(article, existing_breaches)
 
-            # Mark as processed
+            is_duplicate = update_check.get('is_duplicate_source', False)
+            is_genuine_update = update_check['is_update'] and update_check['confidence'] >= 0.7 and not is_duplicate
+
+            if is_genuine_update:
+                db_writer.write_breach_update(extracted, update_check['related_breach_id'], article)
+                stats['updates_created'] += 1
+            elif is_duplicate:
+                # Different outlet, same facts -- skip DB write
+                stats['duplicates_skipped'] += 1
+            else:
+                breach_id = db_writer.write_new_breach(extracted, article)
+                existing_breaches.append({...})  # for in-run detection of subsequent articles
+                stats['breaches_created'] += 1
+
             cache_manager.save_processed_id(article['url'])
 
         except Exception as e:
@@ -259,8 +280,9 @@ def main():
             continue
 
     # 7. Summary
-    logger.info(f"Scraper completed: {stats['new_breaches']} new breaches, "
-                f"{stats['updates']} updates, {stats['errors']} errors")
+    logger.info(f"Scraper completed: {stats['breaches_created']} new, "
+                f"{stats['updates_created']} updates, {stats['duplicates_skipped']} duplicates skipped, "
+                f"{stats['errors']} errors")
 
     return stats
 ```

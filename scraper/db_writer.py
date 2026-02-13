@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 from supabase import create_client, Client
 import uuid
 
-from config import SUPABASE_URL, SUPABASE_KEY
+from config import SUPABASE_URL, SUPABASE_KEY, MAX_EXISTING_BREACHES_FETCH
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +44,10 @@ class DatabaseWriter:
             response = (
                 self.client
                 .from_('breaches')
-                .select('id, company, industry, country, discovery_date, summary, created_at')
+                .select('id, company, industry, country, discovery_date, records_affected, attack_vector, summary, created_at')
                 .gte('created_at', cutoff_date)
                 .order('created_at', desc=True)
-                .limit(100)  # Limit to 100 most recent
+                .limit(MAX_EXISTING_BREACHES_FETCH)
                 .execute()
             )
 
@@ -82,10 +82,13 @@ class DatabaseWriter:
                 'company': breach_data.get('company'),
                 'industry': breach_data.get('industry'),
                 'country': breach_data.get('country'),
+                'continent': breach_data.get('continent'),
                 'discovery_date': breach_data.get('discovery_date'),
+                'disclosure_date': breach_data.get('disclosure_date'),
                 'records_affected': breach_data.get('records_affected'),
                 'breach_method': breach_data.get('breach_method'),
                 'attack_vector': breach_data.get('attack_vector'),
+                'threat_actor': breach_data.get('threat_actor'),
                 'data_compromised': breach_data.get('data_compromised', []),
                 'severity': breach_data.get('severity'),
                 'cve_references': breach_data.get('cve_references', []),
@@ -205,6 +208,14 @@ class DatabaseWriter:
         """
         tags_to_insert = []
 
+        # Continent tag
+        if breach_data.get('continent'):
+            tags_to_insert.append({
+                'breach_id': breach_id,
+                'tag_type': 'continent',
+                'tag_value': breach_data['continent']
+            })
+
         # Country tag
         if breach_data.get('country'):
             tags_to_insert.append({
@@ -227,6 +238,14 @@ class DatabaseWriter:
                 'breach_id': breach_id,
                 'tag_type': 'attack_vector',
                 'tag_value': breach_data['attack_vector']
+            })
+
+        # Threat actor tag
+        if breach_data.get('threat_actor'):
+            tags_to_insert.append({
+                'breach_id': breach_id,
+                'tag_type': 'threat_actor',
+                'tag_value': breach_data['threat_actor']
             })
 
         # CVE tags

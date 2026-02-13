@@ -10,10 +10,16 @@ Usage:
 """
 
 import argparse
+import io
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+
+# Force UTF-8 output on Windows terminals (avoids GBK encode errors from
+# replacement characters produced by errors='replace' in subprocess decoding)
+if hasattr(sys.stdout, 'buffer'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 # Paths
 SCRAPER_DIR = Path(__file__).parent
@@ -37,7 +43,7 @@ def run_command(cmd, description):
             text=True,
             encoding='utf-8',
             errors='replace',
-            timeout=300
+            timeout=1200
         )
 
         if result.stdout:
@@ -53,7 +59,7 @@ def run_command(cmd, description):
 
         return result.returncode == 0, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
-        print("ERROR: Command timed out after 5 minutes")
+        print("ERROR: Command timed out after 20 minutes")
         return False, "", "Timeout"
     except Exception as e:
         print(f"ERROR: {e}")
@@ -162,7 +168,7 @@ def check_extraction_quality():
         print(f"\nExtractions: {len(data)}")
 
         # Check field coverage
-        fields = ['country', 'discovery_date', 'records_affected', 'severity', 'attack_vector']
+        fields = ['country', 'discovery_date', 'disclosure_date', 'records_affected', 'severity', 'attack_vector']
         coverage = {f: 0 for f in fields}
 
         for item in data:
@@ -178,11 +184,17 @@ def check_extraction_quality():
             print(f"  {field:20} {count}/{len(data)} ({pct:5.1f}%) [{status}]")
 
         # Check update detection
-        updates = sum(1 for d in data if d.get('update_check', {}).get('is_update'))
-        new_breaches = len(data) - updates
+        genuine_updates = sum(
+            1 for d in data
+            if d.get('update_check', {}).get('is_update')
+            and not d.get('update_check', {}).get('is_duplicate_source')
+        )
+        duplicates_skipped = sum(1 for d in data if d.get('update_check', {}).get('is_duplicate_source'))
+        new_breaches = len(data) - genuine_updates - duplicates_skipped
         print(f"\nUpdate Detection:")
         print(f"  New breaches: {new_breaches}")
-        print(f"  Updates to existing: {updates}")
+        print(f"  Genuine updates: {genuine_updates}")
+        print(f"  Duplicate sources skipped: {duplicates_skipped}")
 
     except json.JSONDecodeError as e:
         print(f"Error parsing extraction results: {e}")

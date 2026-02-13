@@ -8,9 +8,11 @@ Daily scraper that:
 4. Writes data to Supabase database
 """
 
+import io
 import logging
 import sys
 from datetime import date, datetime
+from difflib import SequenceMatcher
 from pathlib import Path
 
 # Add scraper directory to path
@@ -23,9 +25,34 @@ from db_writer import DatabaseWriter
 from config import (
     LOG_LEVEL,
     LOGS_DIR,
+    RSS_SOURCES,
+    ARTICLE_LOOKBACK_HOURS,
+    FUZZY_MATCH_THRESHOLD,
     ENABLE_CLASSIFICATION,
     CLASSIFICATION_CONFIDENCE_THRESHOLD
 )
+
+
+def _company_similarity(a: str, b: str) -> float:
+    """Return similarity ratio between two company name strings (case-insensitive)."""
+    return SequenceMatcher(None, a.lower().strip(), b.lower().strip()).ratio()
+
+
+def find_in_run_duplicate(company: str, existing_breaches: list) -> dict | None:
+    """
+    Check if a company name closely matches any breach already written in this
+    scraper run (identified by having no 'created_at' from the DB, i.e. appended
+    during the current run).  Returns the matching breach dict or None.
+
+    This guards against the case where two articles about the same breach are
+    fetched in the same run before either is stored in the DB, which means
+    detect_update() cannot catch the second one via database lookup.
+    """
+    for breach in existing_breaches:
+        existing_company = breach.get('company') or ''
+        if existing_company and _company_similarity(company, existing_company) >= FUZZY_MATCH_THRESHOLD:
+            return breach
+    return None
 
 
 def setup_logging():
@@ -44,8 +71,13 @@ def setup_logging():
     # Clear any existing handlers
     logger.handlers = []
 
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
+    # Console handler: use UTF-8 wrapper to avoid crashes on Windows (GBK) when
+    # article titles contain non-ASCII characters (e.g. non-breaking hyphens).
+    utf8_stdout = (
+        io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        if hasattr(sys.stdout, 'buffer') else sys.stdout
+    )
+    console_handler = logging.StreamHandler(utf8_stdout)
     console_handler.setLevel(logging.INFO)
     console_formatter = logging.Formatter(
         '%(asctime)s - %(levelname)s - %(message)s',
@@ -91,6 +123,7 @@ def main():
         'classified_as_non_breach': 0,
         'breaches_created': 0,
         'updates_created': 0,
+        'duplicates_skipped': 0,
         'errors': 0,
         'skipped': 0
     }
@@ -104,7 +137,7 @@ def main():
         logger.info("+ All components initialized")
 
         # Fetch RSS feeds
-        logger.info("\n[2/7] Fetching RSS feeds from 10 sources...")
+        logger.info(f"\n[2/7] Fetching RSS feeds from {len(RSS_SOURCES)} sources...")
         raw_articles = feed_parser.fetch_all_feeds(parallel=True)
         stats['articles_fetched'] = len(raw_articles)
         logger.info(f"+ Fetched {stats['articles_fetched']} total articles")
@@ -114,8 +147,8 @@ def main():
             return stats
 
         # Filter recent articles
-        logger.info("\n[3/7] Filtering recent articles (last 48 hours)...")
-        recent_articles = feed_parser.filter_recent_articles(raw_articles, hours=48)
+        logger.info(f"\n[3/7] Filtering recent articles (last {ARTICLE_LOOKBACK_HOURS} hours)...")
+        recent_articles = feed_parser.filter_recent_articles(raw_articles, hours=ARTICLE_LOOKBACK_HOURS)
         stats['articles_recent'] = len(recent_articles)
         logger.info(f"+ Filtered to {stats['articles_recent']} recent articles")
 
@@ -189,7 +222,29 @@ def main():
 
                 # Step 3: Detect if this is an update or new breach
                 logger.info("  -> Detecting if update to existing breach...")
-                update_check = ai_processor.detect_update(article, existing_breaches)
+
+                # Fast in-run fuzzy check: if we already wrote a breach for this
+                # company earlier in the same scraper run, skip the AI call and
+                # treat this article as an update immediately.  This prevents
+                # duplicates when two articles about the same company arrive in
+                # the same run before either has been persisted to the DB.
+                company_name = extracted.get('company', '')
+                in_run_match = find_in_run_duplicate(company_name, existing_breaches) if company_name else None
+
+                if in_run_match:
+                    logger.info(
+                        f"  + In-run duplicate detected: '{company_name}' matches "
+                        f"'{in_run_match.get('company')}' (id: {in_run_match.get('id')}) "
+                        f"- forcing as UPDATE without AI call"
+                    )
+                    update_check = {
+                        'is_update': True,
+                        'related_breach_id': in_run_match['id'],
+                        'update_type': 'new_info',
+                        'confidence': 1.0
+                    }
+                else:
+                    update_check = ai_processor.detect_update(article, existing_breaches)
 
                 if not update_check:
                     logger.warning("  X Update detection failed, treating as new breach")
@@ -201,9 +256,17 @@ def main():
                     }
 
                 # Step 4: Write to database
-                if update_check['is_update'] and update_check['confidence'] >= 0.7:
-                    # This is an update to an existing breach
-                    logger.info(f"  + Identified as UPDATE (confidence: {update_check['confidence']:.2%})")
+                is_duplicate = update_check.get('is_duplicate_source', False)
+                is_genuine_update = (
+                    update_check['is_update']
+                    and update_check['confidence'] >= 0.7
+                    and not is_duplicate
+                )
+
+                if is_genuine_update:
+                    # Genuinely new information about an existing breach
+                    logger.info(f"  + Identified as GENUINE UPDATE (confidence: {update_check['confidence']:.2%})")
+                    logger.info(f"  Reason: {update_check.get('reasoning', '')}")
                     logger.info(f"  -> Writing update to breach {update_check['related_breach_id']}...")
 
                     update_id = db.write_breach_update(
@@ -221,6 +284,14 @@ def main():
                         logger.error("  X Failed to write update")
                         stats['errors'] += 1
 
+                elif is_duplicate:
+                    # Different source reporting the same facts — discard, no DB write
+                    logger.info(
+                        f"  ~ Duplicate source detected (confidence: {update_check['confidence']:.2%}): "
+                        f"{update_check.get('reasoning', '')} -- skipping DB write"
+                    )
+                    stats['duplicates_skipped'] += 1
+
                 else:
                     # This is a new breach
                     logger.info(f"  + Identified as NEW BREACH")
@@ -232,11 +303,13 @@ def main():
                         logger.info(f"  + Breach created: {breach_id}")
                         stats['breaches_created'] += 1
 
-                        # Add to existing breaches list for future update detection
+                        # Add to existing breaches list for future update detection in this run
                         existing_breaches.append({
                             'id': breach_id,
                             'company': extracted.get('company'),
                             'discovery_date': extracted.get('discovery_date'),
+                            'records_affected': extracted.get('records_affected'),
+                            'attack_vector': extracted.get('attack_vector'),
                             'summary': extracted.get('summary'),
                             'created_at': datetime.now().isoformat()
                         })
@@ -284,6 +357,7 @@ def main():
         logger.info(f"Skipped (Non-Breach):    {stats['skipped']}")
     logger.info(f"Breaches Created:        {stats['breaches_created']}")
     logger.info(f"Updates Created:         {stats['updates_created']}")
+    logger.info(f"Duplicates Skipped:      {stats['duplicates_skipped']}")
     logger.info(f"Errors:                  {stats['errors']}")
     logger.info(f"Completion Time:         {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 80)

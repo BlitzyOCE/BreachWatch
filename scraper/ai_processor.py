@@ -22,7 +22,8 @@ from config import (
     CLASSIFICATION_MAX_TOKENS,
     EXTRACTION_PROMPT,
     UPDATE_DETECTION_PROMPT,
-    MAX_RETRIES
+    MAX_RETRIES,
+    MAX_EXISTING_BREACHES_CONTEXT
 )
 
 logger = logging.getLogger(__name__)
@@ -277,14 +278,13 @@ class AIProcessor:
             logger.warning("Extraction missing required field: summary")
             return False
 
-        # Validate attack_vector if present
-        valid_attack_vectors = [
+        # Validate attack_vector if present - must match DB CHECK constraint
+        valid_attack_vectors = {
             'phishing', 'ransomware', 'api_exploit', 'insider',
             'supply_chain', 'misconfiguration', 'malware', 'ddos', 'other'
-        ]
+        }
         if data.get('attack_vector') and data['attack_vector'] not in valid_attack_vectors:
-            logger.warning(f"Invalid attack_vector: {data['attack_vector']}")
-            # Don't fail validation, just set to null
+            logger.warning(f"Invalid attack_vector: {data['attack_vector']}, setting to null")
             data['attack_vector'] = None
 
         # Validate severity if present
@@ -320,11 +320,13 @@ class AIProcessor:
 
         # Format existing breaches for prompt
         breaches_list = []
-        for breach in existing_breaches[:50]:  # Limit to 50 most recent to avoid token limits
+        for breach in existing_breaches[:MAX_EXISTING_BREACHES_CONTEXT]:
             breach_summary = (
                 f"- ID: {breach.get('id')}\n"
                 f"  Company: {breach.get('company', 'Unknown')}\n"
                 f"  Discovery Date: {breach.get('discovery_date', 'Unknown')}\n"
+                f"  Records Affected: {breach.get('records_affected', 'Unknown')}\n"
+                f"  Attack Vector: {breach.get('attack_vector', 'Unknown')}\n"
                 f"  Summary: {breach.get('summary', '')[:150]}\n"
             )
             breaches_list.append(breach_summary)
@@ -359,14 +361,23 @@ class AIProcessor:
                 # Default to treating as new breach
                 return {
                     'is_update': False,
+                    'is_duplicate_source': False,
                     'related_breach_id': None,
                     'update_type': None,
                     'confidence': 0.5,
                     'reasoning': 'Failed to parse AI response, defaulting to new breach'
                 }
 
-            logger.info(f"Update detection result: is_update={update_data.get('is_update')}, "
-                       f"confidence={update_data.get('confidence')}")
+            # Normalise: ensure is_duplicate_source is always present
+            if 'is_duplicate_source' not in update_data:
+                update_data['is_duplicate_source'] = False
+
+            logger.info(
+                f"Update detection result: classification={update_data.get('classification', 'n/a')}, "
+                f"is_update={update_data.get('is_update')}, "
+                f"is_duplicate_source={update_data.get('is_duplicate_source')}, "
+                f"confidence={update_data.get('confidence')}"
+            )
 
             return update_data
 
@@ -375,6 +386,7 @@ class AIProcessor:
             # Default to treating as new breach on error
             return {
                 'is_update': False,
+                'is_duplicate_source': False,
                 'related_breach_id': None,
                 'update_type': None,
                 'confidence': 0.0,

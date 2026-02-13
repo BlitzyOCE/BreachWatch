@@ -26,7 +26,7 @@ class DatabaseAuditor:
     """Audits breach database for quality issues."""
 
     REQUIRED_FIELDS = ['company', 'industry', 'country', 'severity', 'summary']
-    IMPORTANT_FIELDS = ['discovery_date', 'records_affected', 'attack_vector', 'breach_method']
+    IMPORTANT_FIELDS = ['discovery_date', 'disclosure_date', 'records_affected', 'attack_vector', 'breach_method']
 
     def __init__(self):
         self.db = DatabaseWriter()
@@ -295,6 +295,7 @@ class DatabaseAuditor:
         print(f"Potential duplicates: {len(duplicates)} companies with multiple entries")
         print(f"Breaches missing 'country': {missing['required']['country']}/{missing['total']}")
         print(f"Breaches missing 'discovery_date': {missing['important']['discovery_date']}/{missing['total']}")
+        print(f"Breaches missing 'disclosure_date': {missing['important']['disclosure_date']}/{missing['total']}")
         print(f"Total updates recorded: {len(self.updates)}")
 
 

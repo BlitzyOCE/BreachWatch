@@ -25,7 +25,8 @@
 - Local file cache for raw articles (JSON storage)
 - Scheduled execution via cron job (daily runs)
 - Error handling and retry logic
-- Deduplication filter (avoid processing same article twice)
+- URL-based deduplication (across RSS sources, via processed_ids.txt)
+- In-run fuzzy company name deduplication (within a single run, using SequenceMatcher with 0.85 threshold)
 
 **Tech Stack**:
 - Python 3.11+
@@ -291,22 +292,23 @@ website/
      - If extraction fails, log error and skip
 
 6. **Update Detection**
-   - Fetch list of existing breaches from Supabase
+   - Fetch list of existing breaches from Supabase (loaded once at run start; includes `records_affected` and `attack_vector` for structured comparison)
    - For each extracted breach:
-     - Send to DeepSeek API with update detection prompt
-     - DeepSeek determines: NEW breach or UPDATE?
-     - If UPDATE: identify which existing breach it relates to
+     - First: fast Python-side fuzzy match on company name against breaches written earlier in this run (SequenceMatcher >= 0.85). If matched, force as update without an AI call.
+     - Otherwise: send to DeepSeek API with three-way update detection prompt
+     - DeepSeek classifies as one of: `NEW_BREACH`, `GENUINE_UPDATE`, or `DUPLICATE_SOURCE`
 
 7. **Database Writing**
-   - **If NEW breach:**
+   - **If NEW_BREACH:**
      - Insert into `breaches` table
      - Insert tags into `breach_tags` table
      - Insert source into `sources` table
-   - **If UPDATE:**
+   - **If GENUINE_UPDATE** (confidence >= 0.7, adds new facts):
      - Insert into `breach_updates` table
      - Update `breaches.updated_at` timestamp
-     - Optionally update `breaches` fields if new data
      - Insert source into `sources` table
+   - **If DUPLICATE_SOURCE** (same facts, different outlet):
+     - Mark URL as processed, log, skip DB write entirely
 
 8. **Cleanup**
    - Append processed article IDs to `processed_ids.txt`

@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from dateutil import parser as date_parser
 
-from config import RSS_SOURCES, ARTICLE_LOOKBACK_HOURS, REQUEST_TIMEOUT, MAX_RETRIES
+from config import RSS_SOURCES, ARTICLE_LOOKBACK_HOURS, REQUEST_TIMEOUT, MAX_RETRIES, MAX_FEED_WORKERS
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +205,7 @@ def fetch_all_feeds(parallel: bool = True) -> List[Dict]:
 
     if parallel:
         # Fetch feeds in parallel using ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=MAX_FEED_WORKERS) as executor:
             future_to_source = {
                 executor.submit(fetch_feed, key, config): key
                 for key, config in RSS_SOURCES.items()

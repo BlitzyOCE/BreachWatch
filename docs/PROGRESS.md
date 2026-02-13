@@ -40,32 +40,36 @@
 
 ---
 
-## 🔄 Phase 2: Python Scraper (BUILT - READY FOR TESTING)
+## [RUNNING] Phase 2: Python Scraper (BUILT & RUNNING - 2026-02-13)
 
 ### What We Built
-- **Complete scraper system** with 6 Python modules
-- **10 RSS feed sources** configured (BleepingComputer, The Hacker News, etc.)
-- **Two-Stage AI Processing** for cost optimization (NEW - 2026-02-06)
+- **Complete scraper system** with 6 Python modules + audit tool
+- **8 RSS feed sources** configured (BleepingComputer, The Hacker News, etc.)
+- **Two-Stage AI Processing** for cost optimization (2026-02-06)
+- **Three-way update detection** (NEW_BREACH / GENUINE_UPDATE / DUPLICATE_SOURCE) (2026-02-13)
+- **In-run fuzzy deduplication** to prevent same-run duplicate breaches (2026-02-13)
 - **Local caching** with deduplication
 - **Comprehensive logging** and error handling
+- **Database audit tool** (`audit.py`) for data quality checks
 
 ### Key Features
 - ✅ Stage 1: Fast classification to identify breach articles (saves 40-60% on API costs)
 - ✅ Stage 2: Detailed extraction for confirmed breaches
-- ✅ Parallel RSS feed fetching from 10 sources
-- ✅ URL-based deduplication
-- ✅ Processed ID tracking to prevent reprocessing
+- ✅ Three-way update detection: NEW_BREACH / GENUINE_UPDATE / DUPLICATE_SOURCE
+- ✅ Parallel RSS feed fetching from 8 sources
+- ✅ URL-based deduplication (across sources)
+- ✅ In-run fuzzy company name deduplication (within a single run, pre-AI)
+- ✅ Processed ID tracking to prevent reprocessing across runs
 - ✅ Configurable confidence thresholds
+- ✅ `audit.py` - data quality tool with duplicate detection, missing field analysis, CSV export
 
-### Next Steps - Testing
-1. ⬜ Set up .env file with API credentials (DeepSeek + Supabase)
-2. ⬜ Install Python 3.11+ and create virtual environment
-3. ⬜ Install dependencies: `pip install -r requirements.txt`
-4. ⬜ Test individual modules (feed_parser.py, ai_processor.py, db_writer.py)
-5. ⬜ Run full scraper: `python main.py`
-6. ⬜ Verify breaches appear in Supabase database
-7. ⬜ Review classification metrics in logs
-8. ⬜ Set up daily cron job for automation
+
+### Completed Setup Steps
+- ✅ .env configured with DeepSeek + Supabase credentials
+- ✅ Virtual environment and dependencies installed
+- ✅ All modules tested and running
+- ✅ Full scraper runs verified end-to-end
+- ⬜ Set up daily cron job for automation
 
 ---
 
@@ -142,6 +146,46 @@
 
 ## Session Notes
 
+### 2026-02-13 (QA) - Feed Cleanup + Audit Improvements
+
+**SecurityWeek removed** (`config.py`):
+- SecurityWeek feed was returning 403 errors consistently, removed from `RSS_SOURCES`
+- Source count is now 8
+
+**Audit improvements** (`audit.py`):
+- `disclosure_date` added to `IMPORTANT_FIELDS` (was missing; articles report public disclosure dates, not internal discovery dates)
+- Audit summary now prints both `discovery_date` and `disclosure_date` missing counts
+
+**Test script fixes** (`test_scraper.py`):
+- Timeout bumped from 5 min to 20 min to accommodate large backlogs
+- `disclosure_date` added to extraction quality field coverage report
+- Update detection counter split into three separate lines: `New breaches`, `Genuine updates`, `Duplicate sources skipped`
+
+**Root cause identified - not fixed**: `ARTICLE_LOOKBACK_HOURS=50000` in `.env` causes all ~400+ feed articles to be treated as "recent" on any fresh-cache run, which always hits the 20-min timeout. Normal daily runs (with populated `processed_ids.txt`) process only 5-15 new articles and complete in ~2 minutes.
+
+---
+
+### 2026-02-13 - Three-Way Update Detection + In-Run Fuzzy Deduplication
+
+**Root cause of Betterment duplicate**: two consecutive runs (19 min apart, different sources) both passed as NEW_BREACH because `detect_update()` only had a binary decision and no structured fields to compare against.
+
+**Three-way update detection** (`config.py`, `ai_processor.py`, `db_writer.py`, `main.py`):
+- Rewrote `UPDATE_DETECTION_PROMPT` to classify as `NEW_BREACH`, `GENUINE_UPDATE`, or `DUPLICATE_SOURCE`
+- `DUPLICATE_SOURCE`: same incident, different outlet, no new facts -> skip DB write entirely
+- `GENUINE_UPDATE`: same incident but adds revised record count, regulatory action, new attack detail, etc. -> `write_breach_update()`
+- Added `records_affected` and `attack_vector` to `get_existing_breaches()` select so the AI has structured fields to compare
+- Added `duplicates_skipped` counter to run stats
+
+**In-run fuzzy deduplication** (`main.py`):
+- Added `find_in_run_duplicate()` using `difflib.SequenceMatcher` (threshold 0.85) as a pre-AI fast check within a single run
+- If matched, forces `is_update=True` with `confidence=1.0` and skips the AI call
+
+**Feed fixes** (`config.py`):
+- Replaced broken `cert_be` (`https://cert.be/en/rss` returned malformed XML) with `securityweek` (`https://www.securityweek.com/feed/`) - later removed, see 2026-02-13 (QA) session note
+
+**Windows logging fix** (`main.py`):
+- Console handler now wraps stdout with `io.TextIOWrapper(encoding='utf-8', errors='replace')` to prevent crashes on non-ASCII article titles
+
 ### 2026-02-06 - Two-Stage AI Classification Implementation
 - Implemented two-stage AI approach for cost optimization
 - Added CLASSIFICATION_PROMPT to config.py for fast breach detection
@@ -162,23 +206,3 @@
 - Successfully deployed to Supabase production
 
 ---
-
-## Files Created
-
-### Database
-- ✅ `database/enhanced_schema.sql` - Complete database schema
-
-### Documentation
-- ✅ `docs/ideas.md` - Updated with completed database tasks
-- ✅ `docs/start.md` - Updated with Phase 1 completion
-- ✅ `docs/PROGRESS.md` - This file (project progress tracking)
-
----
-
-## Notes for Next Session
-
-1. Start with Phase 2: Python Scraper
-2. Focus on simple implementation first (no AI yet)
-3. Test with one RSS feed (SecurityWeek recommended)
-4. Manually insert test data to verify Supabase connection
-5. Get Supabase connection credentials from project settings

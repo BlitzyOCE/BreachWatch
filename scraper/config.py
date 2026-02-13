@@ -20,7 +20,7 @@ LOGS_DIR = BASE_DIR / "logs"
 CACHE_DIR.mkdir(exist_ok=True)
 LOGS_DIR.mkdir(exist_ok=True)
 
-# RSS Feed Sources (10 sources)
+# RSS Feed Sources (8 sources)
 RSS_SOURCES = {
     'bleepingcomputer': {
         'name': 'BleepingComputer',
@@ -37,11 +37,6 @@ RSS_SOURCES = {
         'url': 'https://www.databreachtoday.co.uk/rss-feeds',
         'language': 'en'
     },
-    'darkreading': {
-        'name': 'Dark Reading',
-        'url': 'https://www.darkreading.com/rss_simple.asp',
-        'language': 'en'
-    },
     'krebsonsecurity': {
         'name': 'Krebs on Security',
         'url': 'https://krebsonsecurity.com/feed/',
@@ -50,11 +45,6 @@ RSS_SOURCES = {
     'helpnetsecurity': {
         'name': 'HelpNet Security',
         'url': 'https://www.helpnetsecurity.com/feed',
-        'language': 'en'
-    },
-    'cert_be': {
-        'name': 'CERT.be',
-        'url': 'https://cert.be/en/rss',
         'language': 'en'
     },
     'ncsc_uk': {
@@ -90,6 +80,10 @@ ARTICLE_LOOKBACK_HOURS = int(os.getenv('ARTICLE_LOOKBACK_HOURS', '48'))
 MAX_RETRIES = int(os.getenv('MAX_RETRIES', '3'))
 RETRY_DELAY = int(os.getenv('RETRY_DELAY', '5'))  # seconds
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))  # seconds
+MAX_FEED_WORKERS = int(os.getenv('MAX_FEED_WORKERS', '10'))  # parallel RSS fetch threads
+MAX_EXISTING_BREACHES_FETCH = int(os.getenv('MAX_EXISTING_BREACHES_FETCH', '100'))  # DB fetch cap
+MAX_EXISTING_BREACHES_CONTEXT = int(os.getenv('MAX_EXISTING_BREACHES_CONTEXT', '50'))  # AI prompt context cap
+FUZZY_MATCH_THRESHOLD = float(os.getenv('FUZZY_MATCH_THRESHOLD', '0.85'))  # in-run company name similarity
 
 # Logging Configuration
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
@@ -141,11 +135,14 @@ Extract the following information in JSON format:
 {{
   "company": "Exact company name mentioned (null if not specified)",
   "industry": "Industry sector (e.g., healthcare, finance, retail, technology, government, education, null if unknown)",
-  "country": "Country where the breached organization is headquartered or operates (ISO country name)",
-  "discovery_date": "Date breach was discovered or disclosed in YYYY-MM-DD format",
+  "country": "Country where the breached organization is headquartered or operates (ISO country name, null if unknown)",
+  "continent": "Continent of the breached organization: Africa|Asia|Europe|North America|Oceania|South America (null if unknown)",
+  "discovery_date": "Date the breach was internally discovered in YYYY-MM-DD format (null if not clearly stated in the article)",
+  "disclosure_date": "Date the breach was publicly disclosed or announced in YYYY-MM-DD format (null if not clearly stated in the article)",
   "records_affected": number of records affected as integer (null if not specified),
   "breach_method": "Brief description of how the breach occurred (null if not specified)",
   "attack_vector": "One of: phishing|ransomware|api_exploit|insider|supply_chain|misconfiguration|malware|ddos|other (null if unclear)",
+  "threat_actor": "Name of the threat actor, hacker group, or ransomware gang responsible (null if unknown)",
   "data_compromised": ["Array of data types exposed, e.g., emails, passwords, SSNs, credit cards"],
   "severity": "One of: low|medium|high|critical based on impact (null if cannot determine)",
   "cve_references": ["Array of CVE IDs mentioned, e.g., CVE-2024-1234"],
@@ -156,26 +153,42 @@ Extract the following information in JSON format:
 
 EXTRACTION GUIDELINES:
 
-Country:
-- Extract from explicit mentions ("Spain's Ministry", "Italian university", "UK-based company")
+Country & Continent:
+- Extract country from explicit mentions ("Spain's Ministry", "Italian university", "UK-based company")
 - For well-known companies, use their headquarters country (e.g., Substack -> United States, Betterment -> United States)
-- Use null only if the company is unknown and no country context is provided
+- Derive continent from country (e.g., United States -> North America, Romania -> Europe, Netherlands -> Europe)
+- Use null for both only if the company is completely unknown with no geographic context
 
-Discovery Date:
-- If exact date given: use it directly (e.g., "January 15, 2026" -> "2026-01-15")
-- If only month and year given: use 15th as default (e.g., "October 2025" -> "2025-10-15")
-- If only month given: assume current year {year} (e.g., "in January" -> "{year}-01-15")
-- If relative time given: calculate from today's date (e.g., "last month" from {today})
-- Use null only if no time reference exists at all
+Discovery Date vs Disclosure Date:
+- discovery_date: when the breach was first detected/found internally
+- disclosure_date: when it was publicly announced or reported
+- Only populate these if the article explicitly states or clearly implies the date
+- If only one date is mentioned and it is unclear which type it is, populate disclosure_date only
+- Do NOT infer or guess dates from vague relative terms like "recently" or "last month"
+- If an exact date is given (e.g., "January 15, 2026"), use it: "2026-01-15"
+- If only month and year are given (e.g., "October 2025"), use the 1st: "2025-10-01"
+- If dates are not clearly provided, use null
+
+Threat Actor:
+- Include the name of the ransomware gang, hacker group, or individual attacker if named
+- Use null if no attribution is made
 
 General:
 - For records_affected, only include if a specific number is mentioned
-- Be factual but allow reasonable inference from context for country and dates
+- Be factual; do not speculate
 - Ensure valid JSON format
 """
 
 # Update Detection Prompt
-UPDATE_DETECTION_PROMPT = """You are determining if this article is about a NEW data breach or an UPDATE to an existing breach.
+UPDATE_DETECTION_PROMPT = """You are a cybersecurity intelligence analyst. Classify this article into exactly one of three categories:
+
+NEW_BREACH      - A breach incident not already in the database.
+GENUINE_UPDATE  - An existing breach in the database, but this article adds meaningfully new information:
+                  revised/higher record counts, new legal or regulatory action, new technical attack details,
+                  confirmation of previously unknown data types, remediation steps, or investigation findings.
+DUPLICATE_SOURCE - An existing breach in the database, but this article adds no meaningfully new facts.
+                  It re-reports the same incident from a different outlet with the same or very similar details
+                  (same record count, same attack method, same discovery date, no new developments).
 
 Article Title: {title}
 Article URL: {url}
@@ -184,24 +197,24 @@ Article Summary: {summary}
 Existing breaches in database (last 90 days):
 {existing_breaches}
 
-Analyze the article and determine:
-1. Is this article discussing one of the existing breaches listed above?
-2. Does it provide new information about a known incident (updates, fines, lawsuits, remediation)?
-3. Or is this a completely new breach incident?
+Classification rules:
+- Match on company name first. If the company does not appear in the list, classify as NEW_BREACH.
+- Once a company match is found, compare structured fields:
+    - If records_affected, attack_vector, and discovery_date all match and the article adds no new details -> DUPLICATE_SOURCE
+    - If any key field differs (record count revised, new attack detail revealed, legal/regulatory action, remediation) -> GENUINE_UPDATE
+- When in doubt about whether new information is present, prefer DUPLICATE_SOURCE over GENUINE_UPDATE.
+- When in doubt about whether the company matches at all, prefer NEW_BREACH over DUPLICATE_SOURCE.
 
-Return JSON:
+Return JSON only:
 {{
-  "is_update": true or false,
-  "related_breach_id": "UUID of the related breach from the list above, or null if this is a new breach",
+  "classification": "NEW_BREACH|GENUINE_UPDATE|DUPLICATE_SOURCE",
+  "is_update": true if classification is GENUINE_UPDATE, false otherwise,
+  "is_duplicate_source": true if classification is DUPLICATE_SOURCE, false otherwise,
+  "related_breach_id": "UUID of the matching breach from the list above, or null if NEW_BREACH",
   "update_type": "One of: new_info|class_action|regulatory_fine|remediation|resolution|investigation|null",
   "confidence": 0.0 to 1.0 confidence score,
-  "reasoning": "Brief 1-2 sentence explanation of your decision"
+  "reasoning": "One sentence explanation citing the specific signal that drove your classification"
 }}
-
-Guidelines:
-- If the article mentions the same company AND similar timeframe as an existing breach, it's likely an update
-- If in doubt, default to is_update: false (treat as new breach)
-- Only set is_update: true if you are confident (confidence > 0.6)
 """
 
 # Validation settings
