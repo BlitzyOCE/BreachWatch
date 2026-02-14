@@ -35,26 +35,7 @@
 - `schedule` or cron for automation
 - `json` for local caching
 
-**RSS Sources (Initial)**:
-- SecurityWeek: `https://www.securityweek.com/feed/`
-- BleepingComputer: `https://www.bleepingcomputer.com/feed/`
-- KrebsOnSecurity: `https://krebsonsecurity.com/feed/`
-- The Hacker News: `https://thehackernews.com/feeds/posts/default`
 
-**File Structure**:
-```
-scraper/
-├── main.py                 # Main scraper orchestration
-├── feed_parser.py          # RSS feed fetching logic
-├── cache_manager.py        # Local file cache operations
-├── ai_processor.py         # DeepSeek API integration
-├── db_writer.py            # Supabase data writing
-├── config.py               # Configuration and constants
-├── requirements.txt        # Python dependencies
-├── .env                    # API keys (gitignored)
-└── cache/                  # Local article storage
-    ├── raw_2024-02-02.json
-    └── processed_ids.txt
 ```
 
 #### 2. AI Processing Layer (DeepSeek API)
@@ -73,56 +54,7 @@ scraper/
 - JSON schema validation for outputs
 - Retry logic for API failures
 
-**AI Prompts Design**:
 
-**Extraction Prompt** (for new articles):
-```
-You are a cybersecurity analyst extracting structured breach data.
-
-Article: {article_text}
-
-Extract the following information in JSON format:
-{
-  "company": "Company name",
-  "industry": "Industry sector",
-  "country": "Country/region",
-  "discovery_date": "YYYY-MM-DD",
-  "records_affected": number,
-  "breach_method": "Description of how breach occurred",
-  "attack_vector": "phishing|ransomware|api_exploit|insider|supply_chain|misconfiguration|other",
-  "data_compromised": ["type1", "type2"],
-  "severity": "low|medium|high|critical",
-  "cve_references": ["CVE-XXXX-XXXXX"],
-  "mitre_attack_techniques": ["T1078", "T1566"],
-  "summary": "2-3 sentence executive summary",
-  "lessons_learned": "What security controls failed and recommendations"
-}
-
-If information is not mentioned, use null. Be factual and avoid speculation.
-```
-
-**Update Detection Prompt**:
-```
-You are determining if this article is about a NEW breach or an UPDATE to an existing breach.
-
-Article: {article_text}
-
-Existing breaches in database:
-{list_of_existing_breaches}
-
-Analyze:
-1. Does this article discuss any of the existing breaches?
-2. Is this new information about a known incident?
-
-Return JSON:
-{
-  "is_update": true|false,
-  "related_breach_id": "uuid or null",
-  "update_type": "new_info|class_action|fine|remediation|resolution|null",
-  "confidence": 0.0-1.0,
-  "reasoning": "Brief explanation"
-}
-```
 
 
 #### 3. Data Storage Layer (Supabase)
@@ -170,37 +102,7 @@ Return JSON:
 - Framer Motion for animations (optional)
 
 
-**Draft File Structure**:
-```
-website/
-├── app/
-│   ├── page.tsx                    # Homepage
-│   ├── breach/[id]/page.tsx        # Breach detail
-│   ├── search/page.tsx             # Search results
-│   ├── about/page.tsx              # About page
-│   └── layout.tsx                  # Root layout
-├── components/
-│   ├── BreachCard.tsx
-│   ├── BreachTimeline.tsx
-│   ├── FilterBar.tsx
-│   ├── SearchBar.tsx
-│   ├── TagBadge.tsx
-│   └── ...
-├── lib/
-│   ├── supabase.ts                 # Supabase client
-│   ├── types.ts                    # TypeScript types
-│   └── utils.ts                    # Helper functions
-├── public/
-│   └── images/
-├── styles/
-│   └── globals.css
-├── package.json
-├── tsconfig.json
-├── tailwind.config.js
-└── next.config.js
-```
 
----
 
 ## Data Flow
 
