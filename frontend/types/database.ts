@@ -32,6 +32,7 @@ export type TagType =
 export interface Breach {
   id: string;
   company: string;
+  title: string | null;
   industry: string | null;
   country: string | null;
   continent: string | null;

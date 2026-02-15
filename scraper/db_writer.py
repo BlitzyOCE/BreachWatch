@@ -80,6 +80,7 @@ class DatabaseWriter:
             # Prepare breach record
             breach_record = {
                 'company': breach_data.get('company'),
+                'title': breach_data.get('title'),
                 'industry': breach_data.get('industry'),
                 'country': breach_data.get('country'),
                 'continent': breach_data.get('continent'),

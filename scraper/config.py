@@ -134,6 +134,7 @@ Extract the following information in JSON format:
 
 {{
   "company": "Exact company name mentioned (null if not specified)",
+  "title": "Concise, descriptive breach headline (e.g., 'Qantas 2025 Customer Data Breach', 'Instagram 17M Profile Scraping Incident'). Must include company name, year, and nature of breach. Max 80 chars.",
   "industry": "Industry sector (e.g., healthcare, finance, retail, technology, government, education, null if unknown)",
   "country": "Country where the breached organization is headquartered or operates (ISO country name, null if unknown)",
   "continent": "Continent of the breached organization: Africa|Asia|Europe|North America|Oceania|South America (null if unknown)",

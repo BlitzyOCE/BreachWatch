@@ -36,6 +36,7 @@ CREATE TABLE public.breach_views (
 CREATE TABLE public.breaches (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   company text NOT NULL,
+  title text,
   industry text,
   country text,
   continent text,

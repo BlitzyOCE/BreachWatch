@@ -17,7 +17,7 @@ export function BreachCard({ breach }: BreachCardProps) {
           <div className="flex items-start justify-between gap-2 overflow-hidden">
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-lg font-semibold">
-                {breach.company}
+                {breach.title || breach.company}
               </h3>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 {breach.industry && <span>{breach.industry}</span>}

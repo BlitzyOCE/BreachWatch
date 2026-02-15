@@ -117,15 +117,18 @@ class DatabaseAuditor:
 
         for i, b in enumerate(self.breaches, 1):
             created = b.get('created_at', '')[:19] if b.get('created_at') else 'N/A'
-            company = (b.get('company') or 'Unknown')[:30]
-            industry = (b.get('industry') or '-')[:15]
-            country = (b.get('country') or '-')[:10]
-            severity = (b.get('severity') or '-')[:8]
+            company = b.get('company') or 'Unknown'
+            title = b.get('title') or ''
+            industry = b.get('industry') or '-'
+            country = b.get('country') or '-'
+            severity = b.get('severity') or '-'
             records = b.get('records_affected')
             records_str = f"{records:,}" if records else '-'
-            attack = (b.get('attack_vector') or '-')[:15]
+            attack = b.get('attack_vector') or '-'
 
             print(f"\n[{i}] {company}")
+            if title:
+                print(f"    Title: {title}")
             print(f"    ID: {b['id']}")
             print(f"    Industry: {industry} | Country: {country} | Severity: {severity}")
             print(f"    Records: {records_str} | Attack: {attack}")

@@ -22,7 +22,7 @@ export function BreachDetail({ breach, relatedBreaches }: BreachDetailProps) {
       <div className="mb-8">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            {breach.company}
+            {breach.title || breach.company}
           </h1>
           <SeverityBadge severity={breach.severity} />
         </div>
