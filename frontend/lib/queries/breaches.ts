@@ -109,6 +109,7 @@ interface FilterOptions {
   industry?: string[];
   country?: string[];
   attackVector?: string[];
+  threatActor?: string[];
   sort?: string;
   page?: number;
   perPage?: number;
@@ -143,7 +144,8 @@ export async function getFilteredBreaches(
     filters.severity?.length ||
     filters.industry?.length ||
     filters.country?.length ||
-    filters.attackVector?.length
+    filters.attackVector?.length ||
+    filters.threatActor?.length
   ) {
     // Build a set of breach IDs matching all filters
     const tagFilters: { type: string; values: string[] }[] = [];
@@ -155,6 +157,8 @@ export async function getFilteredBreaches(
       tagFilters.push({ type: "country", values: filters.country });
     if (filters.attackVector?.length)
       tagFilters.push({ type: "attack_vector", values: filters.attackVector });
+    if (filters.threatActor?.length)
+      tagFilters.push({ type: "threat_actor", values: filters.threatActor });
 
     // For severity, filter directly on the breaches column
     if (filters.severity?.length) {

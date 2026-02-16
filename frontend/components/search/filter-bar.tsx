@@ -10,6 +10,7 @@ const FILTER_LABELS: Record<string, string> = {
   industry: "Industry",
   country: "Country",
   attack_vector: "Attack Vector",
+  threat_actor: "Threat Actor",
 };
 
 export function FilterBar() {
@@ -17,7 +18,7 @@ export function FilterBar() {
   const searchParams = useSearchParams();
 
   const activeFilters: { key: string; value: string }[] = [];
-  for (const key of ["severity", "industry", "country", "attack_vector"]) {
+  for (const key of ["severity", "industry", "country", "attack_vector", "threat_actor"]) {
     for (const value of searchParams.getAll(key)) {
       activeFilters.push({ key, value });
     }

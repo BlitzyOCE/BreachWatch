@@ -51,8 +51,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const industry = toStringArray(params.industry);
   const country = toStringArray(params.country);
   const attackVector = toStringArray(params.attack_vector);
+  const threatActor = toStringArray(params.threat_actor);
 
-  const [{ data: breaches, count }, industryCounts, countryCounts, attackVectorCounts] =
+  const [{ data: breaches, count }, industryCounts, countryCounts, attackVectorCounts, threatActorCounts] =
     await Promise.all([
       getFilteredBreaches({
         query: query || undefined,
@@ -60,12 +61,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         industry: industry.length ? industry : undefined,
         country: country.length ? country : undefined,
         attackVector: attackVector.length ? attackVector : undefined,
+        threatActor: threatActor.length ? threatActor : undefined,
         sort,
         page,
       }),
       getTagCounts("industry"),
       getTagCounts("country"),
       getTagCounts("attack_vector"),
+      getTagCounts("threat_actor"),
     ]);
 
   const perPage = 12;
@@ -74,7 +77,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     severity.length > 0 ||
     industry.length > 0 ||
     country.length > 0 ||
-    attackVector.length > 0;
+    attackVector.length > 0 ||
+    threatActor.length > 0;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -105,7 +109,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     {severity.length +
                       industry.length +
                       country.length +
-                      attackVector.length}
+                      attackVector.length +
+                      threatActor.length}
                   </span>
                 )}
               </Button>
@@ -116,6 +121,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 industryCounts={industryCounts}
                 countryCounts={countryCounts}
                 attackVectorCounts={attackVectorCounts}
+                threatActorCounts={threatActorCounts}
               />
             </SheetContent>
           </Sheet>
@@ -135,6 +141,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               industryCounts={industryCounts}
               countryCounts={countryCounts}
               attackVectorCounts={attackVectorCounts}
+              threatActorCounts={threatActorCounts}
             />
           </Suspense>
         </aside>

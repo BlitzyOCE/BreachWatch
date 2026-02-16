@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Shield } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { SearchBar } from "@/components/search/search-bar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 
 export function Header() {
@@ -37,9 +36,6 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <div className="hidden sm:block">
-            <SearchBar compact />
-          </div>
           <ThemeToggle />
           <div className="md:hidden">
             <MobileNav />

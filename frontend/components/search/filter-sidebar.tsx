@@ -84,6 +84,7 @@ interface FilterSidebarProps {
   industryCounts: TagCount[];
   countryCounts: TagCount[];
   attackVectorCounts: TagCount[];
+  threatActorCounts: TagCount[];
 }
 
 export function FilterSidebar({
@@ -91,6 +92,7 @@ export function FilterSidebar({
   industryCounts,
   countryCounts,
   attackVectorCounts,
+  threatActorCounts,
 }: FilterSidebarProps) {
   return (
     <div className="space-y-1">
@@ -114,6 +116,11 @@ export function FilterSidebar({
         title="Attack Vector"
         paramKey="attack_vector"
         options={attackVectorCounts}
+      />
+      <FilterSection
+        title="Threat Actor"
+        paramKey="threat_actor"
+        options={threatActorCounts}
       />
     </div>
   );
