@@ -148,7 +148,7 @@ Extract the following information in JSON format:
   "severity": "One of: low|medium|high|critical based on impact (null if cannot determine)",
   "cve_references": ["Array of CVE IDs mentioned, e.g., CVE-2024-1234"],
   "mitre_attack_techniques": ["Array of MITRE ATT&CK technique IDs if mentioned, e.g., T1078"],
-  "summary": "<300 words executive summary of the breach",
+  "summary": "500-600 word detailed summary of the breach, structured in 2-3 paragraphs separated by \\n\\n. First paragraph: what happened, who was affected, and the scale. Second paragraph: how it happened (technical details, attack vector, timeline). Third paragraph (if applicable): response, consequences, and current status.",
   "lessons_learned": "Brief analysis of what security controls failed and recommendations (null if cannot determine)"
 }}
 

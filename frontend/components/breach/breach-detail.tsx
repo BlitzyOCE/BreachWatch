@@ -39,9 +39,11 @@ export function BreachDetail({ breach, relatedBreaches }: BreachDetailProps) {
           {breach.summary && (
             <section>
               <h2 className="text-xl font-semibold tracking-tight">Summary</h2>
-              <p className="mt-3 leading-relaxed text-muted-foreground">
-                {breach.summary}
-              </p>
+              <div className="mt-3 space-y-4 leading-relaxed text-muted-foreground">
+                {breach.summary.split("\n\n").map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </div>
             </section>
           )}
 
