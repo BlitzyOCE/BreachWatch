@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Calendar, Database, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { SeverityBadge } from "@/components/ui/severity-badge";
 import { formatRelativeDate, formatNumber, truncate } from "@/lib/utils/formatting";
 import type { BreachSummary } from "@/types/database";
 
@@ -13,24 +12,21 @@ export function BreachCard({ breach }: BreachCardProps) {
   return (
     <Link href={`/breach/${breach.id}`}>
       <Card className="h-full transition-shadow hover:shadow-md">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-2 overflow-hidden">
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-lg font-semibold">
+        <CardHeader className="pb-1">
+          <div>
+              <h3 className="line-clamp-3 text-lg font-semibold leading-tight">
                 {breach.title || breach.company}
               </h3>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                {breach.industry && <span>{breach.industry}</span>}
+                {breach.industry && <span className="capitalize">{breach.industry}</span>}
                 {breach.industry && breach.country && (
                   <span className="text-border">|</span>
                 )}
                 {breach.country && <span>{breach.country}</span>}
               </div>
-            </div>
-            <SeverityBadge severity={breach.severity} />
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-2">
           {breach.summary && (
             <p className="text-sm leading-relaxed text-muted-foreground">
               {truncate(breach.summary, 150)}
