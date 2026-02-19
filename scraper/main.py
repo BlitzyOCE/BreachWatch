@@ -1,5 +1,5 @@
 """
-BreachWatch Scraper - Main Orchestrator
+BreachCase Scraper - Main Orchestrator
 
 Daily scraper that:
 1. Fetches breach news from 10 RSS feeds
@@ -109,7 +109,7 @@ def main():
     logger = setup_logging()
 
     logger.info("=" * 80)
-    logger.info("BreachWatch Scraper Starting")
+    logger.info("BreachCase Scraper Starting")
     logger.info(f"Date: {date.today().isoformat()}")
     logger.info(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 80)

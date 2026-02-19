@@ -1,6 +1,6 @@
 # Test Scraper
 
-Run the complete BreachWatch scraper test workflow.
+Run the complete BreachCase scraper test workflow.
 
 ## What This Does
 

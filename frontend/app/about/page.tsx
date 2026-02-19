@@ -7,23 +7,23 @@ import { RSS_SOURCES } from "@/lib/utils/constants";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn about BreachWatch, an AI-powered data breach intelligence platform.",
+    "Learn about BreachCase, an AI-powered data breach intelligence platform.",
 };
 
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold tracking-tight">About BreachWatch</h1>
+      <h1 className="text-3xl font-bold tracking-tight">About BreachCase</h1>
 
       <div className="mt-6 space-y-6 text-muted-foreground leading-relaxed">
         <p>
-          BreachWatch is an AI-powered data breach intelligence platform that
+          BreachCase is an AI-powered data breach intelligence platform that
           automatically aggregates, analyzes, and tracks cybersecurity incidents
           from across the web.
         </p>
         <p>
           Unlike traditional breach databases that only catalog incidents,
-          BreachWatch treats breaches as <strong>living stories</strong> —
+          BreachCase treats breaches as <strong>living stories</strong> —
           continuously updating as new information emerges, regulatory actions
           are taken, and legal consequences unfold.
         </p>

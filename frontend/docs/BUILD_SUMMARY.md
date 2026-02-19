@@ -1,4 +1,4 @@
-# BreachWatch Frontend — Build Summary
+# BreachCase Frontend — Build Summary
 
 ## Status: Phase 1–6 Complete ✓
 

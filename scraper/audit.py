@@ -1,5 +1,5 @@
 """
-Database audit tool for BreachWatch.
+Database audit tool for BreachCase.
 
 Provides data quality checks, duplicate detection, and export capabilities.
 
@@ -303,7 +303,7 @@ class DatabaseAuditor:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Audit BreachWatch database')
+    parser = argparse.ArgumentParser(description='Audit BreachCase database')
     parser.add_argument('--csv', action='store_true', help='Export data to CSV files')
     parser.add_argument('--duplicates', action='store_true', help='Show only potential duplicates')
     args = parser.parse_args()

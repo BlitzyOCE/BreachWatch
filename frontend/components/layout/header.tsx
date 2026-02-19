@@ -11,7 +11,7 @@ export function Header() {
           <Link href="/" className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold tracking-tight">
-              BreachWatch
+              BreachCase
             </span>
           </Link>
           <nav className="hidden items-center gap-6 md:flex">

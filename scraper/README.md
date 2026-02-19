@@ -1,4 +1,4 @@
-# BreachWatch Scraper
+# BreachCase Scraper
 
 Python-based breach news aggregation scraper that fetches articles from 10 RSS feeds, uses DeepSeek AI for data extraction, and stores results in Supabase.
 

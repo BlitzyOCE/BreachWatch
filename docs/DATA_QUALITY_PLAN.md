@@ -2,7 +2,7 @@
 
 ## Current State Assessment
 
-BreachWatch currently relies on **8 RSS feeds** (BleepingComputer, The Hacker News, DataBreachToday, Krebs on Security, HelpNet Security, NCSC UK, Check Point Research, Have I Been Pwned). Articles are fetched every 48 hours, classified by AI, and extracted into structured breach records.
+BreachCase currently relies on **8 RSS feeds** (BleepingComputer, The Hacker News, DataBreachToday, Krebs on Security, HelpNet Security, NCSC UK, Check Point Research, Have I Been Pwned). Articles are fetched every 48 hours, classified by AI, and extracted into structured breach records.
 
 ### What works well
 - Three-stage AI pipeline (classify -> extract -> dedup) is solid and cost-efficient
@@ -262,7 +262,7 @@ The existing `ai_processor.py` handles summary generation. The existing `db_writ
 
 **Architecture decision — AI agents:**
 
-The term "AI agent" here means an LLM that is given a tool (a web browser or search API) and autonomously decides how to use it to accomplish a goal. For BreachWatch, the agents don't need to be sophisticated — they perform the same task repeatedly on a schedule:
+The term "AI agent" here means an LLM that is given a tool (a web browser or search API) and autonomously decides how to use it to accomplish a goal. For BreachCase, the agents don't need to be sophisticated — they perform the same task repeatedly on a schedule:
 
 ```
 Agent task: "Go to [state AG URL], find all breach notifications

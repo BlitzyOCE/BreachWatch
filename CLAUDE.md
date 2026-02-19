@@ -2,7 +2,7 @@
 
 ## Project
 
-BreachWatch - AI-powered data breach intelligence platform. RSS feeds -> DeepSeek AI extraction -> Supabase -> Next.js frontend. Breaches are "living stories" with timeline updates.
+BreachCase - AI-powered data breach intelligence platform. RSS feeds -> DeepSeek AI extraction -> Supabase -> Next.js frontend. Breaches are "living stories" with timeline updates.
 
 ## Architecture
 

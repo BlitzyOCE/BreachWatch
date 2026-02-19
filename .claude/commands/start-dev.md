@@ -6,7 +6,7 @@ Read the following project files in order:
 3. other existing files that might be relevant
 
 Then provide a brief summary of:
-- What BreachWatch does
+- What BreachCase does
 - Current progress
 - Next priority tasks
 

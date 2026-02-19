@@ -236,13 +236,13 @@ def check_database_updates():
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Test BreachWatch scraper')
+    parser = argparse.ArgumentParser(description='Test BreachCase scraper')
     parser.add_argument('--audit', action='store_true', help='Run audit only (skip scraper)')
     parser.add_argument('--clear', action='store_true', help='Clear cache before running')
     args = parser.parse_args()
 
     print("\n" + "="*60)
-    print("  BREACHWATCH SCRAPER TEST")
+    print("  BREACHCASE SCRAPER TEST")
     print("  " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     print("="*60)
 

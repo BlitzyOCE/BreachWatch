@@ -1,8 +1,8 @@
-# BreachWatch - Product Overview & Technical Architecture
+# BreachCase - Product Overview & Technical Architecture
 
 ## Product Description
 
-**BreachWatch** is an AI-powered data breach intelligence platform that automatically aggregates, analyzes, and tracks cybersecurity incidents from across the web. Unlike traditional breach databases that only catalog incidents, BreachWatch treats breaches as living stories—continuously updating as new information emerges, regulatory actions are taken, and legal consequences unfold.
+**BreachCase** is an AI-powered data breach intelligence platform that automatically aggregates, analyzes, and tracks cybersecurity incidents from across the web. Unlike traditional breach databases that only catalog incidents, BreachCase treats breaches as living stories—continuously updating as new information emerges, regulatory actions are taken, and legal consequences unfold.
 
 ### Key Differentiators
 - **Timeline Tracking**: Each breach has a living timeline showing discovery, disclosure, fines, lawsuits, and remediation
@@ -228,7 +228,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                         GitHub Repository                     │
-│                    github.com/user/breachwatch               │
+│                    github.com/user/breachcase               │
 └────────────┬────────────────────────────┬────────────────────┘
              │                            │
              │ Push to main               │ Push to main

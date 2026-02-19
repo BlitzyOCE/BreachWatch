@@ -23,8 +23,8 @@ const robotoMono = Roboto_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "BreachWatch - Data Breach Intelligence",
-    template: "%s | BreachWatch",
+    default: "BreachCase - Data Breach Intelligence",
+    template: "%s | BreachCase",
   },
   description:
     "AI-powered data breach intelligence platform. Track, analyze, and understand cybersecurity incidents as they unfold.",

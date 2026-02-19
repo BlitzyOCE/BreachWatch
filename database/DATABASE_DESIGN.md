@@ -1,9 +1,9 @@
-# BreachWatch Database Design Documentation
+# BreachCase Database Design Documentation
 The current database structure is presented in current_db.sql
 
 ## Overview
 
-The BreachWatch database is designed to store and track data breach incidents as "living stories" that continuously evolve with new information. The schema supports AI-powered data extraction, breach deduplication, full-text search, and timeline tracking of updates.
+The BreachCase database is designed to store and track data breach incidents as "living stories" that continuously evolve with new information. The schema supports AI-powered data extraction, breach deduplication, full-text search, and timeline tracking of updates.
 
 **Database Type:** PostgreSQL (via Supabase)
 **Last Updated:** 2024-02-04

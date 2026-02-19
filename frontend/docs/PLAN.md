@@ -1,8 +1,8 @@
-# BreachWatch Frontend Development Plan
+# BreachCase Frontend Development Plan
 
 ## Context
 
-BreachWatch is an AI-powered data breach intelligence platform. The backend (Python scraper + Supabase database) is operational and collecting breach data from 8 RSS sources. This document covers the phased plan for building the Next.js frontend.
+BreachCase is an AI-powered data breach intelligence platform. The backend (Python scraper + Supabase database) is operational and collecting breach data from 8 RSS sources. This document covers the phased plan for building the Next.js frontend.
 
 **Design decisions made before implementation:**
 - **UI Tone**: Modern / Editorial — card-based, generous whitespace, easy scanning (like a news site)

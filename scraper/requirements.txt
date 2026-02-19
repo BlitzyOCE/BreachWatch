@@ -1,4 +1,4 @@
-# BreachWatch Scraper Dependencies
+# BreachCase Scraper Dependencies
 
 # RSS Feed Parsing
 feedparser==6.0.11

@@ -28,7 +28,7 @@ export function MobileNav() {
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            BreachWatch
+            BreachCase
           </SheetTitle>
         </SheetHeader>
         <div className="mt-6 flex flex-col gap-4">

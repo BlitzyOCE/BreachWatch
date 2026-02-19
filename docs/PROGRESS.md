@@ -1,4 +1,4 @@
-# BreachWatch - Development Progress
+# BreachCase - Development Progress
 
 ## Project Status: 🟡 Phase 1 Complete - Building Backend
 
@@ -7,7 +7,7 @@
 ## ✅ Phase 1: Database Foundation (COMPLETED - 2024-02-04)
 
 ### What We Built
-- **Supabase Project**: Created "BreachWatch" production instance
+- **Supabase Project**: Created "BreachCase" production instance
 - **Enhanced Database Schema**: 6 tables, 2 views, 3 utility functions
 - **File**: `database/enhanced_schema.sql`
 

@@ -1,5 +1,5 @@
 """
-Configuration settings for BreachWatch scraper.
+Configuration settings for BreachCase scraper.
 
 Contains RSS feed sources, API settings, file paths, and AI prompts.
 """

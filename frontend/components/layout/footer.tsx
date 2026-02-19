@@ -8,7 +8,7 @@ export function Footer() {
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium">BreachWatch</span>
+            <span className="text-sm font-medium">BreachCase</span>
           </div>
           <p className="text-center text-sm text-muted-foreground">
             Breach data is aggregated from public sources and analyzed using AI.
