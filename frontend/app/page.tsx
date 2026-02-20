@@ -2,23 +2,14 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BreachCard } from "@/components/breach/breach-card";
-import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SearchBar } from "@/components/search/search-bar";
-import {
-  getRecentBreaches,
-  getBreachCount,
-  getRecentBreachCount,
-} from "@/lib/queries/breaches";
+import { getRecentBreaches } from "@/lib/queries/breaches";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [breaches, totalCount, recentCount] = await Promise.all([
-    getRecentBreaches(12),
-    getBreachCount(),
-    getRecentBreachCount(7),
-  ]);
+  const breaches = await getRecentBreaches(12);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -28,22 +19,11 @@ export default async function Home() {
           Data Breach Intelligence
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-          AI-powered tracking and analysis of cybersecurity incidents as they
-          unfold. Stay informed about the latest data breaches worldwide.
+          AI-powered tracking of data breach incidents. Stay informed and stay alert.
         </p>
         <div className="mx-auto mt-6 max-w-md">
           <SearchBar />
         </div>
-      </div>
-
-      {/* Stats */}
-      <div className="mt-12 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Breaches Tracked" value={totalCount} />
-        <StatCard label="This Week" value={recentCount} />
-        <StatCard
-          label="Sources Monitored"
-          value={8}
-        />
       </div>
 
       {/* Recent Breaches */}

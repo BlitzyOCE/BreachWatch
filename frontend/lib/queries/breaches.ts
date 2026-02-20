@@ -105,7 +105,6 @@ export async function getRecentBreachCount(days = 7): Promise<number> {
 
 interface FilterOptions {
   query?: string;
-  severity?: string[];
   industry?: string[];
   country?: string[];
   attackVector?: string[];
@@ -141,16 +140,12 @@ export async function getFilteredBreaches(
 
   // Apply tag-based filters by checking breach IDs against breach_tags
   if (
-    filters.severity?.length ||
     filters.industry?.length ||
     filters.country?.length ||
     filters.attackVector?.length ||
     filters.threatActor?.length
   ) {
-    // Build a set of breach IDs matching all filters
     const tagFilters: { type: string; values: string[] }[] = [];
-    if (filters.severity?.length)
-      tagFilters.push({ type: "severity", values: filters.severity });
     if (filters.industry?.length)
       tagFilters.push({ type: "industry", values: filters.industry });
     if (filters.country?.length)
@@ -160,14 +155,7 @@ export async function getFilteredBreaches(
     if (filters.threatActor?.length)
       tagFilters.push({ type: "threat_actor", values: filters.threatActor });
 
-    // For severity, filter directly on the breaches column
-    if (filters.severity?.length) {
-      query = query.in("severity", filters.severity);
-    }
-
-    // For tag-based filters, we need to find matching breach IDs
     for (const tf of tagFilters) {
-      if (tf.type === "severity") continue; // handled above
       const { data: tagMatches } = await supabase
         .from("breach_tags")
         .select("breach_id")
@@ -190,9 +178,6 @@ export async function getFilteredBreaches(
         ascending: false,
         nullsFirst: false,
       });
-      break;
-    case "severity":
-      query = query.order("severity", { ascending: false });
       break;
     case "records":
       query = query.order("records_affected", {

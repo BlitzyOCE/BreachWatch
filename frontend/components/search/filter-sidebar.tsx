@@ -80,7 +80,6 @@ function FilterSection({ title, paramKey, options }: FilterSectionProps) {
 }
 
 interface FilterSidebarProps {
-  severityCounts: TagCount[];
   industryCounts: TagCount[];
   countryCounts: TagCount[];
   attackVectorCounts: TagCount[];
@@ -88,7 +87,6 @@ interface FilterSidebarProps {
 }
 
 export function FilterSidebar({
-  severityCounts,
   industryCounts,
   countryCounts,
   attackVectorCounts,
@@ -97,11 +95,6 @@ export function FilterSidebar({
   return (
     <div className="space-y-1">
       <h3 className="mb-3 text-sm font-semibold">Filters</h3>
-      <FilterSection
-        title="Severity"
-        paramKey="severity"
-        options={severityCounts}
-      />
       <FilterSection
         title="Industry"
         paramKey="industry"

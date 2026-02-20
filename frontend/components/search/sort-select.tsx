@@ -12,7 +12,6 @@ import {
 const SORT_OPTIONS = [
   { value: "recent", label: "Most Recent" },
   { value: "updated", label: "Recently Updated" },
-  { value: "severity", label: "Severity" },
   { value: "records", label: "Records Affected" },
 ];
 

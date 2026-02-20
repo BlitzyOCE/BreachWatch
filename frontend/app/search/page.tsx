@@ -11,7 +11,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SlidersHorizontal } from "lucide-react";
 import { getFilteredBreaches } from "@/lib/queries/breaches";
 import { getTagCounts } from "@/lib/queries/tags";
-import type { TagCount } from "@/types/database";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -30,24 +29,12 @@ function toStringArray(value: string | string[] | undefined): string[] {
   return Array.isArray(value) ? value : [value];
 }
 
-// Build severity "tag counts" from the severity enum values since severity
-// is a column on breaches, not a tag_type in breach_tags
-function buildSeverityCounts(): TagCount[] {
-  return [
-    { tag_type: "attack_vector", tag_value: "critical", breach_count: 0 },
-    { tag_type: "attack_vector", tag_value: "high", breach_count: 0 },
-    { tag_type: "attack_vector", tag_value: "medium", breach_count: 0 },
-    { tag_type: "attack_vector", tag_value: "low", breach_count: 0 },
-  ];
-}
-
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = typeof params.q === "string" ? params.q : "";
   const page = typeof params.page === "string" ? parseInt(params.page, 10) : 1;
   const sort = typeof params.sort === "string" ? params.sort : undefined;
 
-  const severity = toStringArray(params.severity);
   const industry = toStringArray(params.industry);
   const country = toStringArray(params.country);
   const attackVector = toStringArray(params.attack_vector);
@@ -57,7 +44,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     await Promise.all([
       getFilteredBreaches({
         query: query || undefined,
-        severity: severity.length ? severity : undefined,
         industry: industry.length ? industry : undefined,
         country: country.length ? country : undefined,
         attackVector: attackVector.length ? attackVector : undefined,
@@ -74,7 +60,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const perPage = 12;
   const totalPages = Math.ceil(count / perPage);
   const hasFilters =
-    severity.length > 0 ||
     industry.length > 0 ||
     country.length > 0 ||
     attackVector.length > 0 ||
@@ -106,8 +91,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 Filters
                 {hasFilters && (
                   <span className="ml-1 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
-                    {severity.length +
-                      industry.length +
+                    {industry.length +
                       country.length +
                       attackVector.length +
                       threatActor.length}
@@ -117,7 +101,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </SheetTrigger>
             <SheetContent side="left" className="w-72 overflow-y-auto">
               <FilterSidebar
-                severityCounts={buildSeverityCounts()}
                 industryCounts={industryCounts}
                 countryCounts={countryCounts}
                 attackVectorCounts={attackVectorCounts}
@@ -137,7 +120,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <aside className="hidden w-56 shrink-0 lg:block">
           <Suspense>
             <FilterSidebar
-              severityCounts={buildSeverityCounts()}
               industryCounts={industryCounts}
               countryCounts={countryCounts}
               attackVectorCounts={attackVectorCounts}

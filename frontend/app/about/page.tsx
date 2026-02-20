@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { ExternalLink, Rss, Bot, Database, Globe } from "lucide-react";
+import { Rss, Bot, Database, Globe } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { StatCard } from "@/components/ui/stat-card";
 import { RSS_SOURCES } from "@/lib/utils/constants";
+import { getBreachCount } from "@/lib/queries/breaches";
 
 export const metadata: Metadata = {
   title: "About",
@@ -10,10 +12,20 @@ export const metadata: Metadata = {
     "Learn about BreachCase, an AI-powered data breach intelligence platform.",
 };
 
-export default function AboutPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AboutPage() {
+  const totalCount = await getBreachCount();
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold tracking-tight">About BreachCase</h1>
+
+      {/* Stats */}
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <StatCard label="Breaches Tracked" value={totalCount} />
+        <StatCard label="Sources Monitored" value={RSS_SOURCES.length} />
+      </div>
 
       <div className="mt-6 space-y-6 text-muted-foreground leading-relaxed">
         <p>
@@ -89,20 +101,15 @@ export default function AboutPage() {
       {/* Data Sources */}
       <h2 className="text-2xl font-semibold tracking-tight">Data Sources</h2>
       <p className="mt-3 text-sm text-muted-foreground">
-        Breach intelligence is aggregated from the following RSS feeds:
+        Breach intelligence is aggregated from leading cybersecurity news sources and feeds:
       </p>
       <ul className="mt-4 space-y-2">
         {RSS_SOURCES.map((source) => (
-          <li key={source.name}>
-            <a
-              href={source.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-md p-2 text-sm transition-colors hover:bg-accent"
-            >
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-              {source.name}
-            </a>
+          <li
+            key={source.name}
+            className="rounded-md px-2 py-1.5 text-sm text-muted-foreground"
+          >
+            {source.name}
           </li>
         ))}
       </ul>

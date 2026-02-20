@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 const FILTER_LABELS: Record<string, string> = {
-  severity: "Severity",
   industry: "Industry",
   country: "Country",
   attack_vector: "Attack Vector",
@@ -18,7 +17,7 @@ export function FilterBar() {
   const searchParams = useSearchParams();
 
   const activeFilters: { key: string; value: string }[] = [];
-  for (const key of ["severity", "industry", "country", "attack_vector", "threat_actor"]) {
+  for (const key of ["industry", "country", "attack_vector", "threat_actor"]) {
     for (const value of searchParams.getAll(key)) {
       activeFilters.push({ key, value });
     }
