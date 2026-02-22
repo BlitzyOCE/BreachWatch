@@ -21,7 +21,7 @@
 **Purpose**: Fetch breach news from multiple sources automatically
 
 **Components**:
-- RSS feed aggregator (SecurityWeek, BleepingComputer, KrebsOnSecurity, etc.)
+- RSS feed aggregator (BleepingComputer, The Hacker News, KrebsOnSecurity, etc.)
 - Local file cache for raw articles (JSON storage)
 - Scheduled execution via cron job (daily runs)
 - Error handling and retry logic
@@ -31,8 +31,7 @@
 **Tech Stack**:
 - Python 3.11+
 - `feedparser` for RSS parsing
-- `requests` or `httpx` for HTTP requests
-- `schedule` or cron for automation
+- `requests` for HTTP requests
 - `json` for local caching
 
 
@@ -44,12 +43,12 @@
 **Components**:
 - Article-to-structured-data extraction
 - Breach deduplication (matching company name variations)
-- Update detection (NEW breach vs UPDATE to existing breach)
+- Three-way update detection (NEW_BREACH vs GENUINE_UPDATE vs DUPLICATE_SOURCE)
 - Severity assessment and classification
 - Lessons learned generation
 
 **Tech Stack**:
-- DeepSeek AI API (deepseek-chat or deepseek-reasoner)
+- DeepSeek AI API (deepseek-chat)
 - Prompt engineering for consistent extraction
 - JSON schema validation for outputs
 - Retry logic for API failures
@@ -91,15 +90,14 @@
 - `RelatedBreaches` - Horizontal scrolling list of similar breaches
 
 **Tech Stack**:
-- Next.js 14+ (App Router)
-- React 18+
+- Next.js 16 (App Router)
+- React 19
 - TypeScript (for type safety)
-- Tailwind CSS for styling
-- shadcn/ui for component library
+- Tailwind v4 for styling
+- shadcn/ui + Radix UI for component library
 - Supabase JS client for data fetching
 - Server-side rendering (SSR) for SEO
-- Static generation for performance where applicable
-- Framer Motion for animations (optional)
+- next-themes for dark mode support
 
 
 
@@ -111,7 +109,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      RSS Feed Sources                        │
-│  SecurityWeek, BleepingComputer, KrebsOnSecurity, etc.      │
+│  BleepingComputer, The Hacker News, KrebsOnSecurity, etc.   │
 └───────────────────────┬─────────────────────────────────────┘
                         │
                         │ Scraper fetches daily (cron job)
@@ -128,9 +126,9 @@
                         ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    DeepSeek AI (AI)                          │
-│  1. Extract structured data                                  │
-│  2. Detect if NEW breach or UPDATE                           │
-│  3. Match to existing breaches                               │
+│  1. Classify if article is about a breach (Stage 1)          │
+│  2. Extract structured data (Stage 2)                        │
+│  3. Three-way update detection (Stage 3)                     │
 │  4. Generate summary & lessons learned                       │
 └───────────────────────┬─────────────────────────────────────┘
                         │
@@ -186,21 +184,23 @@
    - Extract main text content (remove ads, navigation, etc.)
    - Save raw article to cache: `cache/raw_2024-02-02.json`
 
-5. **AI Processing**
-   - For each cached article:
-     - Send to DeepSeek API with extraction prompt
-     - Receive structured JSON response
-     - Validate JSON schema
+5. **AI Processing (Three Stages)**
+   - **Stage 1 - Classification** (optional, enabled via `ENABLE_CLASSIFICATION`):
+     - Send article to DeepSeek with classification prompt (max 300 tokens)
+     - If confidence < `CLASSIFICATION_CONFIDENCE_THRESHOLD` (0.6), skip article
+     - Saves 40-60% on API costs by filtering non-breach articles
+   - **Stage 2 - Extraction**:
+     - Send confirmed breach article to DeepSeek with extraction prompt (max 8192 tokens)
+     - Receive structured JSON with company, severity, attack vector, etc.
+     - Validate JSON schema and enum values
      - If extraction fails, log error and skip
-
-6. **Update Detection**
-   - Fetch list of existing breaches from Supabase (loaded once at run start; includes `records_affected` and `attack_vector` for structured comparison)
-   - For each extracted breach:
+   - **Stage 3 - Update Detection**:
+     - Fetch list of existing breaches from Supabase (loaded once at run start; includes `records_affected` and `attack_vector` for structured comparison)
      - First: fast Python-side fuzzy match on company name against breaches written earlier in this run (SequenceMatcher >= 0.85). If matched, force as update without an AI call.
      - Otherwise: send to DeepSeek API with three-way update detection prompt
      - DeepSeek classifies as one of: `NEW_BREACH`, `GENUINE_UPDATE`, or `DUPLICATE_SOURCE`
 
-7. **Database Writing**
+6. **Database Writing**
    - **If NEW_BREACH:**
      - Insert into `breaches` table
      - Insert tags into `breach_tags` table
@@ -212,10 +212,9 @@
    - **If DUPLICATE_SOURCE** (same facts, different outlet):
      - Mark URL as processed, log, skip DB write entirely
 
-8. **Cleanup**
+7. **Cleanup**
    - Append processed article IDs to `processed_ids.txt`
-   - Log summary: X new breaches, Y updates, Z errors
-   - Send notification (optional: email/Slack)
+   - Log summary: X new breaches, Y updates, Z duplicates skipped, W errors
 
 **Total Runtime: 5-10 minutes/day**
 

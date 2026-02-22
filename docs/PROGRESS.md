@@ -1,6 +1,6 @@
 # BreachCase - Development Progress
 
-## Project Status: 🟡 Phase 1 Complete - Building Backend
+## Project Status: 🟡 Phase 5 Complete - Polishing UI
 
 ---
 
@@ -73,46 +73,75 @@
 
 ---
 
-## ⬜ Phase 3: API Integration
+## ✅ Phase 3: AI Integration (COMPLETED - 2026-02-06)
 
-### Planned
-- Get Anthropic API key
-- Implement ai_processor.py
-- Extract structured data from articles
-- Test with cached articles
-- Implement retry logic
+### What We Built
+- **DeepSeek API integration** via `ai_processor.py`
+- **Two-stage AI processing** for cost optimization (classify then extract)
+- **Three-way update detection** (NEW_BREACH / GENUINE_UPDATE / DUPLICATE_SOURCE)
+- **JSON schema validation** for AI outputs
+- **Retry logic** with backoff for API failures
 
----
-
-## ⬜ Phase 4: Next.js Website
-
-### Planned
-- Create Next.js app with TypeScript
-- Set up Supabase client
-- Build homepage with breach cards
-- Build breach detail pages
-- Implement basic filtering
+### Key Features
+- ✅ Stage 1: Fast classification to identify breach articles (saves 40-60% on API costs)
+- ✅ Stage 2: Detailed extraction for confirmed breaches (max 8192 tokens)
+- ✅ Stage 3: Three-way update detection with structured field comparison
+- ✅ Configurable confidence thresholds
+- ✅ Enum validation for attack vectors, severities
+- ✅ Required field checks (company, summary)
 
 ---
 
-## ⬜ Phase 5: UI Polish & Components
+## ✅ Phase 4: Next.js Website (COMPLETED - 2026-02)
 
-### Planned
-- Install shadcn/ui
-- Build BreachCard component
-- Build BreachTimeline component
-- Build FilterBar component
-- Add search functionality
+### What We Built
+- **Next.js 16 + React 19** with App Router and TypeScript
+- **Supabase JS client** for server-side data fetching
+- **4 pages**: homepage, breach detail, search with filters, about
+- **Dark mode** support via next-themes
+
+### Pages
+- ✅ Homepage (`/`) - Search bar + 12 recent breach cards
+- ✅ Breach detail (`/breach/[id]`) - Full breach article with metadata generation
+- ✅ Search (`/search`) - Filtered breach list with pagination (12 per page)
+- ✅ About (`/about`) - Platform information, data sources, and statistics
 
 ---
 
-## ⬜ Phase 6: Advanced AI Features
+## ✅ Phase 5: UI Polish & Components (COMPLETED - 2026-02)
 
-### Planned
-- Implement update detection
-- Implement breach deduplication
-- Add confidence scoring
-- Build manual review queue
+### What We Built
+- **shadcn/ui** component library with Radix UI primitives
+- **Tailwind v4** for styling
+- **18 components** organized into `breach/`, `search/`, `layout/`, `ui/`
+
+### Key Components
+- ✅ `BreachCard` - Compact card view (company, date, severity, summary)
+- ✅ `BreachDetail` - Full breach article layout with all sections
+- ✅ `BreachTimeline` - Vertical timeline visualization
+- ✅ `BreachFacts` - Key facts sidebar (dates, records, status)
+- ✅ `BreachTags` - Clickable colored tag badges
+- ✅ `RelatedBreaches` - Similar breaches by shared tags
+- ✅ `SourceList` - Attribution links to original articles
+- ✅ `SearchBar` - Text search
+- ✅ `FilterSidebar` / `FilterBar` - Tag-based filtering with chips
+- ✅ `SortSelect` - Sort options for search results
+- ✅ `SeverityBadge` - Color-coded severity indicator
+- ✅ `Header` / `Footer` / `MobileNav` - Layout components with responsive design
+
+---
+
+## 🟡 Phase 6: Advanced AI Features (PARTIALLY COMPLETE)
+
+### Completed
+- ✅ Three-way update detection (NEW_BREACH / GENUINE_UPDATE / DUPLICATE_SOURCE)
+- ✅ In-run fuzzy company name deduplication (SequenceMatcher >= 0.85)
+- ✅ Confidence scoring for AI-generated updates
+- ✅ Company aliases table for deduplication
+
+### Remaining
+- ⬜ Build manual review queue for AI classifications
+- ⬜ Severity change tracking (e.g., impact increases from 1M to 5M records)
 
 ---
 
@@ -138,9 +167,9 @@
 ### Tech Stack Confirmed
 - ✅ Supabase (PostgreSQL + REST API)
 - ✅ Python 3.11+ for scraper
-- ✅ Claude API (Sonnet 4.5) for AI processing
-- ✅ Next.js 14+ with TypeScript for frontend
-- ✅ Tailwind CSS + shadcn/ui for styling
+- ✅ DeepSeek API (deepseek-chat) for AI processing
+- ✅ Next.js 16 + React 19 with TypeScript for frontend
+- ✅ Tailwind v4 + shadcn/ui + Radix UI for styling/components
 
 ---
 

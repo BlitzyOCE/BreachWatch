@@ -6,7 +6,7 @@ The current database structure is presented in current_db.sql
 The BreachCase database is designed to store and track data breach incidents as "living stories" that continuously evolve with new information. The schema supports AI-powered data extraction, breach deduplication, full-text search, and timeline tracking of updates.
 
 **Database Type:** PostgreSQL (via Supabase)
-**Last Updated:** 2024-02-04
+**Last Updated:** 2026-02-21
 
 ---
 
@@ -591,4 +591,4 @@ ORDER BY last_update_date DESC;
 For questions about database design decisions or schema changes, refer to:
 - **Architecture Doc**: `docs/product.md`
 - **Progress Tracking**: `docs/PROGRESS.md`
-- **Schema File**: `database/enhanced_schema.sql`
+- **Schema File**: `database/current_db.sql`
