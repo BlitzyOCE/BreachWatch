@@ -106,3 +106,54 @@ export interface BreachDetail extends Breach {
   tags: BreachTag[];
   sources: Source[];
 }
+
+export interface SavedBreach {
+  id: string;
+  user_id: string;
+  breach_id: string;
+  created_at: string;
+}
+
+export interface WatchlistFilters {
+  query?: string;
+  industries?: string[];
+  countries?: string[];
+  attack_vectors?: string[];
+  threat_actors?: string[];
+}
+
+export interface Watchlist {
+  id: string;
+  user_id: string;
+  name: string;
+  filters: WatchlistFilters;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommentProfile {
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+export interface Comment {
+  id: string;
+  breach_id: string;
+  user_id: string | null;
+  parent_id: string | null;
+  body: string;
+  status: "visible" | "flagged" | "removed";
+  is_edited: boolean;
+  created_at: string;
+  updated_at: string;
+  profile?: CommentProfile | null;
+  replies?: Comment[];
+}
+
+export interface BreachView {
+  id: string;
+  breach_id: string;
+  user_id: string | null;
+  ip_address: string | null;
+  viewed_at: string;
+}

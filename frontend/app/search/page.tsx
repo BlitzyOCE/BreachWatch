@@ -5,6 +5,7 @@ import { SearchBar } from "@/components/search/search-bar";
 import { FilterSidebar } from "@/components/search/filter-sidebar";
 import { FilterBar } from "@/components/search/filter-bar";
 import { SortSelect } from "@/components/search/sort-select";
+import { SaveWatchlistButton } from "@/components/search/save-watchlist-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -83,6 +84,18 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <FilterBar />
         </Suspense>
         <div className="flex items-center gap-2">
+          {/* Save as Watchlist - shown when filters are active */}
+          {(hasFilters || query) && (
+            <SaveWatchlistButton
+              filters={{
+                query: query || undefined,
+                industries: industry.length ? industry : undefined,
+                countries: country.length ? country : undefined,
+                attack_vectors: attackVector.length ? attackVector : undefined,
+                threat_actors: threatActor.length ? threatActor : undefined,
+              }}
+            />
+          )}
           {/* Mobile filter trigger */}
           <Sheet>
             <SheetTrigger asChild>

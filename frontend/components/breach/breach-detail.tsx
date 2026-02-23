@@ -6,6 +6,8 @@ import { BreachTags } from "@/components/breach/breach-tags";
 import { BreachTimeline } from "@/components/breach/breach-timeline";
 import { SourceList } from "@/components/breach/source-list";
 import { RelatedBreaches } from "@/components/breach/related-breaches";
+import { SaveButton } from "@/components/breach/save-button";
+import { CommentSection } from "@/components/comments/comment-section";
 import { formatRelativeDate } from "@/lib/utils/formatting";
 import type { BreachDetail as BreachDetailType } from "@/types/database";
 import type { BreachSummary } from "@/types/database";
@@ -25,6 +27,7 @@ export function BreachDetail({ breach, relatedBreaches }: BreachDetailProps) {
             {breach.title || breach.company}
           </h1>
           <SeverityBadge severity={breach.severity} />
+          <SaveButton breachId={breach.id} />
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
           Last updated {formatRelativeDate(breach.updated_at)}
@@ -120,6 +123,11 @@ export function BreachDetail({ breach, relatedBreaches }: BreachDetailProps) {
 
           {/* Related Breaches */}
           <RelatedBreaches breaches={relatedBreaches} />
+
+          <Separator />
+
+          {/* Comments */}
+          <CommentSection breachId={breach.id} />
         </div>
 
         {/* Sidebar */}

@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/queries/profile";
+import { getRecentlyViewed } from "@/lib/queries/breach-views-server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { ProfileEditForm } from "@/components/profile/profile-edit-form";
+import { SavedBreachesList } from "@/components/profile/saved-breaches-list";
+import { WatchlistManager } from "@/components/profile/watchlist-manager";
+import { RecentlyViewed } from "@/components/profile/recently-viewed";
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -19,10 +23,12 @@ export default async function ProfilePage() {
 
   if (!user) redirect("/login");
 
-  const profile = await getCurrentProfile();
+  const [profile, recentlyViewed] = await Promise.all([
+    getCurrentProfile(),
+    getRecentlyViewed(user.id, 10),
+  ]);
 
   if (!profile) {
-    // Profile should be auto-created by trigger, but handle edge case
     return (
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
         <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
@@ -34,10 +40,10 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 space-y-8">
       <ProfileHeader profile={profile} email={user.email ?? ""} />
 
-      <Separator className="my-8" />
+      <Separator />
 
       <Card>
         <CardHeader>
@@ -45,6 +51,37 @@ export default async function ProfilePage() {
         </CardHeader>
         <CardContent>
           <ProfileEditForm profile={profile} />
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Saved Breaches</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SavedBreachesList />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Watchlists</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <WatchlistManager />
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recently Viewed</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RecentlyViewed breaches={recentlyViewed} />
         </CardContent>
       </Card>
     </div>

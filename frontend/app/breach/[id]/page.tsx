@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BreachDetail } from "@/components/breach/breach-detail";
+import { ViewTracker } from "@/components/breach/view-tracker";
 import { getBreachById, getRelatedBreaches } from "@/lib/queries/breaches";
 import { truncate } from "@/lib/utils/formatting";
 
@@ -34,5 +35,10 @@ export default async function BreachPage({ params }: BreachPageProps) {
 
   if (!breach) notFound();
 
-  return <BreachDetail breach={breach} relatedBreaches={relatedBreaches} />;
+  return (
+    <>
+      <ViewTracker breachId={id} />
+      <BreachDetail breach={breach} relatedBreaches={relatedBreaches} />
+    </>
+  );
 }
