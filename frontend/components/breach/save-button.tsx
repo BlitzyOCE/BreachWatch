@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import { isBreachSaved, saveBreach, unsaveBreach } from "@/lib/queries/saved-breaches";
 
@@ -12,6 +13,7 @@ interface SaveButtonProps {
 
 export function SaveButton({ breachId }: SaveButtonProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -20,10 +22,12 @@ export function SaveButton({ breachId }: SaveButtonProps) {
     isBreachSaved(breachId).then(setSaved).catch(() => {});
   }, [user, breachId]);
 
-  if (!user) return null;
-
   async function toggle() {
-    if (!user || loading) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (loading) return;
     setLoading(true);
     try {
       if (saved) {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Bookmark } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import { saveBreach, unsaveBreach } from "@/lib/queries/saved-breaches";
 
@@ -12,6 +13,7 @@ interface SaveBreachButtonProps {
 
 export function SaveBreachButton({ breachId, initialSaved = false }: SaveBreachButtonProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [saved, setSaved] = useState(initialSaved);
   const [pending, setPending] = useState(false);
 
@@ -19,7 +21,10 @@ export function SaveBreachButton({ breachId, initialSaved = false }: SaveBreachB
     e.preventDefault();
     e.stopPropagation();
 
-    if (!user) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
     if (pending) return;
 
     setPending(true);
@@ -37,9 +42,6 @@ export function SaveBreachButton({ breachId, initialSaved = false }: SaveBreachB
       setPending(false);
     }
   }
-
-  // Don't render for unauthenticated users
-  if (!user) return null;
 
   return (
     <button

@@ -12,12 +12,9 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col items-center justify-center px-4">
-      <h1 className="text-2xl font-bold tracking-tight">
-        Sign in to BreachCase
+      <h1 className="text-2xl font-bold tracking-tight text-center">
+        Sign in to BreachCase to enjoy personalized features
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Track and analyze data breaches
-      </p>
       <Card className="mt-6 w-full">
         <CardContent className="flex flex-col gap-4 pt-6">
           <GoogleSignInButton mode="login" />
