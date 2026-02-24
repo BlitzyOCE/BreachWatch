@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +13,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { TagCount, WatchlistFilters } from "@/types/database";
 
 interface ConditionBuilderProps {
@@ -45,40 +45,40 @@ function FilterSection({ title, options, selected, onToggle }: FilterSectionProp
   if (options.length === 0) return null;
 
   return (
-    <Collapsible>
-      <CollapsibleTrigger className="group flex w-full items-center justify-between py-2 text-sm font-medium hover:text-foreground">
-        <span>
-          {title}
-          {selected.length > 0 && (
-            <span className="ml-2 text-xs text-muted-foreground">
-              ({selected.length} selected)
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full justify-between font-normal"
+        >
+          <span className="flex items-center gap-2 truncate">
+            <span className="truncate">{title}</span>
+            {selected.length > 0 && (
+              <Badge variant="secondary" className="shrink-0 text-xs">
+                {selected.length}
+              </Badge>
+            )}
+          </span>
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="start">
+        {options.map((option) => (
+          <DropdownMenuCheckboxItem
+            key={option.tag_value}
+            checked={selected.includes(option.tag_value)}
+            onCheckedChange={() => onToggle(option.tag_value)}
+            onSelect={(e) => e.preventDefault()}
+          >
+            <span className="flex-1 truncate capitalize">{option.tag_value}</span>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {option.breach_count}
             </span>
-          )}
-        </span>
-        <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <ScrollArea className="max-h-48">
-          <div className="space-y-1 pb-2">
-            {options.map((option) => (
-              <label
-                key={option.tag_value}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-              >
-                <Checkbox
-                  checked={selected.includes(option.tag_value)}
-                  onCheckedChange={() => onToggle(option.tag_value)}
-                />
-                <span className="flex-1 truncate">{option.tag_value}</span>
-                <span className="text-xs text-muted-foreground">
-                  {option.breach_count}
-                </span>
-              </label>
-            ))}
-          </div>
-        </ScrollArea>
-      </CollapsibleContent>
-    </Collapsible>
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -146,7 +146,7 @@ export function WatchlistConditionBuilder({
         onOpenChange(o);
       }}
     >
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -172,7 +172,7 @@ export function WatchlistConditionBuilder({
             />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-2">
             <p className="text-sm font-medium">
               Filter conditions
               {filterCount > 0 && (
@@ -182,30 +182,32 @@ export function WatchlistConditionBuilder({
               )}
             </p>
 
-            <FilterSection
-              title="Industries"
-              options={industryCounts}
-              selected={industries}
-              onToggle={(v) => setIndustries(toggleValue(industries, v))}
-            />
-            <FilterSection
-              title="Countries"
-              options={countryCounts}
-              selected={countries}
-              onToggle={(v) => setCountries(toggleValue(countries, v))}
-            />
-            <FilterSection
-              title="Attack Vectors"
-              options={attackVectorCounts}
-              selected={attackVectors}
-              onToggle={(v) => setAttackVectors(toggleValue(attackVectors, v))}
-            />
-            <FilterSection
-              title="Threat Actors"
-              options={threatActorCounts}
-              selected={threatActors}
-              onToggle={(v) => setThreatActors(toggleValue(threatActors, v))}
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <FilterSection
+                title="Industries"
+                options={industryCounts}
+                selected={industries}
+                onToggle={(v) => setIndustries(toggleValue(industries, v))}
+              />
+              <FilterSection
+                title="Countries"
+                options={countryCounts}
+                selected={countries}
+                onToggle={(v) => setCountries(toggleValue(countries, v))}
+              />
+              <FilterSection
+                title="Attack Vectors"
+                options={attackVectorCounts}
+                selected={attackVectors}
+                onToggle={(v) => setAttackVectors(toggleValue(attackVectors, v))}
+              />
+              <FilterSection
+                title="Threat Actors"
+                options={threatActorCounts}
+                selected={threatActors}
+                onToggle={(v) => setThreatActors(toggleValue(threatActors, v))}
+              />
+            </div>
           </div>
         </div>
 

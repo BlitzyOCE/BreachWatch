@@ -13,10 +13,12 @@ export function UserManagementTable() {
 
   useEffect(() => {
     const supabase = createBrowserClient();
-    supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false })
+    Promise.resolve(
+      supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false })
+    )
       .then(({ data }) => setUsers((data as Profile[]) ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));

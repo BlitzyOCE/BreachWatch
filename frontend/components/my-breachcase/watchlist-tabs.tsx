@@ -167,9 +167,23 @@ export function WatchlistTabs({
     }
   }
 
+  const header = (
+    <div className="flex w-full items-center justify-between py-3">
+      <h2 className="text-lg font-semibold">
+        Watchlists
+        {!loading && watchlists.length > 0 && (
+          <span className="ml-2 text-sm font-normal text-muted-foreground">
+            ({watchlists.length})
+          </span>
+        )}
+      </h2>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="space-y-4">
+        {header}
         <div className="flex gap-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-9 w-28 rounded-md bg-muted animate-pulse" />
@@ -187,6 +201,7 @@ export function WatchlistTabs({
   if (watchlists.length === 0) {
     return (
       <>
+        {header}
         <div className="flex flex-col items-center gap-3 rounded-lg border bg-card py-12 text-muted-foreground">
           <List className="h-10 w-10 opacity-40" />
           <div className="text-center">
@@ -220,6 +235,7 @@ export function WatchlistTabs({
 
   return (
     <>
+      {header}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center gap-2">
           <TabsList className="flex-wrap">
