@@ -60,6 +60,51 @@ def get_fuzzy_candidates(company: str, all_stubs: list) -> list:
     ]
 
 
+def _compute_match_signals(extracted: dict, candidates: list) -> dict:
+    """
+    Compute structural match signals between extracted article data and each candidate breach.
+
+    Returns a dict keyed by breach UUID:
+      {
+        breach_id: {
+            'records_match': bool | None,   # None if either value is missing
+            'attack_vector_match': bool | None,
+            'existing_records': int | None,
+            'existing_attack_vector': str | None,
+        }
+      }
+    """
+    signals = {}
+    extracted_records = extracted.get('records_affected')
+    extracted_vector = extracted.get('attack_vector')
+
+    for candidate in candidates:
+        bid = candidate.get('id')
+        if not bid:
+            continue
+
+        existing_records = candidate.get('records_affected')
+        existing_vector = candidate.get('attack_vector')
+
+        records_match = None
+        if extracted_records and existing_records:
+            larger = max(extracted_records, existing_records)
+            records_match = abs(extracted_records - existing_records) / larger <= 0.10
+
+        attack_vector_match = None
+        if extracted_vector and existing_vector:
+            attack_vector_match = extracted_vector == existing_vector
+
+        signals[bid] = {
+            'records_match': records_match,
+            'attack_vector_match': attack_vector_match,
+            'existing_records': existing_records,
+            'existing_attack_vector': existing_vector,
+        }
+
+    return signals
+
+
 def setup_logging():
     """Configure logging to both file and console."""
     # Create logs directory
@@ -219,11 +264,11 @@ def main():
                 extracted = ai_processor.extract_breach_data(article)
 
                 if not extracted:
-                    logger.warning("  ✗ AI extraction failed, skipping article")
+                    logger.warning("  X AI extraction failed, skipping article")
                     stats['errors'] += 1
                     continue
 
-                logger.info(f"  ✓ Extracted: {extracted.get('company', 'Unknown')} - {extracted.get('severity', 'unknown')} severity")
+                logger.info(f"  + Extracted: {extracted.get('company', 'Unknown')} - {extracted.get('severity', 'unknown')} severity")
 
                 # Stage 3: Fuzzy pre-filter then AI update detection
                 logger.info("  -> Stage 3: Dedup check...")
@@ -246,7 +291,8 @@ def main():
                     logger.info(f"  + {len(candidates)} fuzzy candidate(s) found - asking AI to classify...")
                     candidate_ids = [c['id'] for c in candidates]
                     candidate_details = db.get_breaches_by_ids(candidate_ids)
-                    update_check = ai_processor.detect_update(article, candidate_details)
+                    match_signals = _compute_match_signals(extracted, candidate_details)
+                    update_check = ai_processor.detect_update(article, candidate_details, match_signals)
 
                     if not update_check:
                         logger.warning("  X Update detection failed, treating as new breach")
@@ -277,7 +323,8 @@ def main():
                         update_check['related_breach_id'],
                         article,
                         update_type=update_check.get('update_type', 'new_info'),
-                        confidence=update_check['confidence']
+                        confidence=update_check['confidence'],
+                        content=update_check.get('update_summary'),
                     )
 
                     if update_id:

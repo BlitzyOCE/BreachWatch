@@ -58,6 +58,7 @@ export interface BreachSummary extends Breach {
   update_count: number;
   source_count: number;
   last_update_date: string | null;
+  effective_date: string | null;
 }
 
 export interface BreachUpdate {

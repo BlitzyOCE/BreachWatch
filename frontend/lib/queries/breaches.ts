@@ -14,7 +14,7 @@ export async function getRecentBreaches(
   const { data, error } = await supabase
     .from("breach_summary")
     .select("*")
-    .order("disclosure_date", { ascending: false, nullsFirst: false })
+    .order("effective_date", { ascending: false, nullsFirst: false })
     .limit(limit);
 
   if (error) throw error;

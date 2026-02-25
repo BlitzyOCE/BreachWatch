@@ -311,7 +311,7 @@ class AIProcessor:
 
         return True
 
-    def detect_update(self, article: Dict, existing_breaches: List[Dict]) -> Optional[Dict]:
+    def detect_update(self, article: Dict, existing_breaches: List[Dict], match_signals: Optional[Dict] = None) -> Optional[Dict]:
         """
         Determine if article is a NEW breach or UPDATE to existing breach.
 
@@ -327,14 +327,38 @@ class AIProcessor:
         # Format existing breaches for prompt
         breaches_list = []
         for breach in existing_breaches[:MAX_EXISTING_BREACHES_CONTEXT]:
+            bid = breach.get('id')
             breach_summary = (
-                f"- ID: {breach.get('id')}\n"
+                f"- ID: {bid}\n"
                 f"  Company: {breach.get('company', 'Unknown')}\n"
                 f"  Discovery Date: {breach.get('discovery_date', 'Unknown')}\n"
                 f"  Records Affected: {breach.get('records_affected', 'Unknown')}\n"
                 f"  Attack Vector: {breach.get('attack_vector', 'Unknown')}\n"
                 f"  Summary: {breach.get('summary', '')[:150]}\n"
             )
+
+            if match_signals and bid and bid in match_signals:
+                sig = match_signals[bid]
+                signal_parts = []
+
+                if sig['records_match'] is True:
+                    signal_parts.append(f"records MATCH ({sig['existing_records']} approx equal to extracted)")
+                elif sig['records_match'] is False:
+                    signal_parts.append(f"records DIFFER ({sig['existing_records']} vs extracted)")
+
+                if sig['attack_vector_match'] is True:
+                    signal_parts.append(f"attack_vector MATCH ({sig['existing_attack_vector']})")
+                elif sig['attack_vector_match'] is False:
+                    signal_parts.append(f"attack_vector DIFFER ({sig['existing_attack_vector']} vs extracted)")
+
+                if signal_parts:
+                    breach_summary += f"  Structural signals: {', '.join(signal_parts)}\n"
+                    if sig['records_match'] is True and sig['attack_vector_match'] is True:
+                        breach_summary += (
+                            "  -> High prior for DUPLICATE_SOURCE - only classify as GENUINE_UPDATE "
+                            "if you can cite a specific new development not in the existing summary.\n"
+                        )
+
             breaches_list.append(breach_summary)
 
         existing_breaches_str = '\n'.join(breaches_list) if breaches_list else "No existing breaches in database."

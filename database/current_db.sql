@@ -123,3 +123,34 @@ CREATE TABLE public.watchlists (
   CONSTRAINT watchlists_pkey PRIMARY KEY (id),
   CONSTRAINT watchlists_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
+CREATE OR REPLACE VIEW public.breach_summary AS
+SELECT b.id,
+    b.company,
+    b.industry,
+    b.country,
+    b.continent,
+    b.discovery_date,
+    b.disclosure_date,
+    b.records_affected,
+    b.breach_method,
+    b.attack_vector,
+    b.data_compromised,
+    b.severity,
+    b.status,
+    b.threat_actor,
+    b.cve_references,
+    b.mitre_techniques,
+    b.summary,
+    b.lessons_learned,
+    b.search_vector,
+    b.created_at,
+    b.updated_at,
+    b.title,
+    count(DISTINCT bu.id)::integer AS update_count,
+    count(DISTINCT s.id)::integer AS source_count,
+    max(bu.update_date) AS last_update_date,
+    COALESCE(b.discovery_date, b.disclosure_date) AS effective_date
+FROM breaches b
+     LEFT JOIN breach_updates bu ON b.id = bu.breach_id
+     LEFT JOIN sources s ON b.id = s.breach_id
+GROUP BY b.id;

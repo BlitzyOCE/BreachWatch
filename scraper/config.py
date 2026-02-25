@@ -149,7 +149,7 @@ Extract the following information in JSON format:
   "severity": "One of: low|medium|high|critical based on impact (null if cannot determine)",
   "cve_references": ["Array of CVE IDs mentioned, e.g., CVE-2024-1234"],
   "mitre_attack_techniques": ["Array of MITRE ATT&CK technique IDs if mentioned, e.g., T1078"],
-  "summary": "500-600 word detailed summary of the breach, structured in 2-3 paragraphs separated by \\n\\n. First paragraph: what happened, who was affected, and the scale. Second paragraph: how it happened (technical details, attack vector, timeline). Third paragraph (if applicable): response, consequences, and current status.",
+  "summary": "Factual, journalistic summary of the breach. 2-3 paragraphs separated by \\n\\n, 3-5 sentences each. Write only confirmed facts from the article - do not speculate or editorialize. Paragraph 1: What happened - name the organization, when the incident occurred, and the scale (records/users affected). Paragraph 2: What was exposed and how - specific data types compromised, the attack method or entry point, and any relevant technical detail or timeline. Paragraph 3 (only include if the article explicitly states one of these): confirmed regulatory action, lawsuit filed, ransom paid, notification to affected users, or service impact. If none of these are present in the article, omit the third paragraph entirely. Do NOT write generic statements like 'this breach highlights the importance of...', 'organizations should...', 'this serves as a reminder...', or any other security advice or lessons-learned commentary. No speculation about what the company could have done better.",
   "lessons_learned": "Brief analysis of what security controls failed and recommendations (null if cannot determine)"
 }}
 
@@ -185,12 +185,11 @@ General:
 UPDATE_DETECTION_PROMPT = """You are a cybersecurity intelligence analyst. Classify this article into exactly one of three categories:
 
 NEW_BREACH      - A breach incident not already in the database.
-GENUINE_UPDATE  - An existing breach in the database, but this article adds meaningfully new information:
-                  revised/higher record counts, new legal or regulatory action, new technical attack details,
-                  confirmation of previously unknown data types, remediation steps, or investigation findings.
+GENUINE_UPDATE  - An existing breach in the database, and this article adds meaningfully new information:
+                  revised record count (>10% change), new legal or regulatory action, new CVE or root cause
+                  identified, confirmation of previously unknown affected systems, or investigation findings.
 DUPLICATE_SOURCE - An existing breach in the database, but this article adds no meaningfully new facts.
-                  It re-reports the same incident from a different outlet with the same or very similar details
-                  (same record count, same attack method, same discovery date, no new developments).
+                  It re-reports the same incident from a different outlet with the same or very similar details.
 
 Article Title: {title}
 Article URL: {url}
@@ -201,11 +200,27 @@ Candidate matching breaches from database (pre-filtered by company name similari
 
 Classification rules:
 - Match on company name first. If the company does not appear in the list, classify as NEW_BREACH.
-- Once a company match is found, compare structured fields:
-    - If records_affected, attack_vector, and discovery_date all match and the article adds no new details -> DUPLICATE_SOURCE
-    - If any key field differs (record count revised, new attack detail revealed, legal/regulatory action, remediation) -> GENUINE_UPDATE
-- When in doubt about whether new information is present, prefer DUPLICATE_SOURCE over GENUINE_UPDATE.
-- When in doubt about whether the company matches at all, prefer NEW_BREACH over DUPLICATE_SOURCE.
+- Once a company match is found, compare structured fields using the candidate details and any
+  structural signals provided.
+
+DUPLICATE_SOURCE rules - any of these = duplicate:
+- An aggregator source (Have I Been Pwned, data breach databases, breach notification services)
+  listing the same incident with the same company and approximately the same record count.
+- More specific enumeration of already-known data types (e.g. "email addresses, phone numbers"
+  vs "personal information") - this is clarification, NOT new information.
+- Same record count, same attack vector, no new legal/regulatory/technical developments.
+
+GENUINE_UPDATE rules - requires at least one of:
+- Record count explicitly revised and differs by more than 10% from existing.
+- New legal action: class action filed, regulatory investigation opened, GDPR/FTC fine issued.
+- New technical detail: CVE identified, root cause confirmed, new affected systems named.
+- New timeline fact: breach discovery date corrected, containment confirmed.
+
+If structural signals show records and attack_vector already match, the bar for GENUINE_UPDATE
+is very high. You must cite a specific new development from the article text to justify it.
+
+When in doubt between GENUINE_UPDATE and DUPLICATE_SOURCE, always prefer DUPLICATE_SOURCE.
+When in doubt about whether the company matches at all, prefer NEW_BREACH over DUPLICATE_SOURCE.
 
 Return JSON only:
 {{
@@ -214,6 +229,7 @@ Return JSON only:
   "is_duplicate_source": true if classification is DUPLICATE_SOURCE, false otherwise,
   "related_breach_id": "UUID of the matching breach from the list above, or null if NEW_BREACH",
   "update_type": "One of: new_info|class_action|regulatory_fine|remediation|resolution|investigation|null",
+  "update_summary": "1-2 sentence description of what specifically is new (e.g. 'Record count revised from 5M to 8.2M after forensic investigation.' or 'FTC opened a formal investigation.'). Null if classification is DUPLICATE_SOURCE or NEW_BREACH.",
   "confidence": 0.0 to 1.0 confidence score,
   "reasoning": "One sentence explanation citing the specific signal that drove your classification"
 }}

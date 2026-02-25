@@ -200,7 +200,8 @@ class DatabaseWriter:
         breach_id: str,
         article: Dict,
         update_type: str = 'new_info',
-        confidence: float = 0.8
+        confidence: float = 0.8,
+        content: Optional[str] = None,
     ) -> Optional[str]:
         """
         Write an update to an existing breach.
@@ -226,7 +227,7 @@ class DatabaseWriter:
                 'breach_id': breach_id,
                 'update_date': date.today().isoformat(),
                 'update_type': update_type,
-                'description': update_data.get('summary', article.get('title', 'Update')),
+                'description': content or article.get('title', 'Update'),
                 'source_url': article['url'],
                 'extracted_data': update_data,
                 'confidence_score': confidence,
