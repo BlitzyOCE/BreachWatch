@@ -20,8 +20,9 @@ LOGS_DIR = BASE_DIR / "logs"
 CACHE_DIR.mkdir(exist_ok=True)
 LOGS_DIR.mkdir(exist_ok=True)
 
-# RSS Feed Sources (8 sources)
+# RSS Feed Sources (21 sources)
 RSS_SOURCES = {
+    # --- Original 8 sources ---
     'bleepingcomputer': {
         'name': 'BleepingComputer',
         'url': 'https://www.bleepingcomputer.com/feed/',
@@ -61,7 +62,73 @@ RSS_SOURCES = {
         'name': 'Have I Been Pwned',
         'url': 'https://feeds.feedburner.com/HaveIBeenPwnedLatestBreaches',
         'language': 'en'
-    }
+    },
+    # --- Phase 1 additions ---
+    'databreachesnet': {
+        'name': 'DataBreaches.net',
+        'url': 'https://databreaches.net/feed/',
+        'language': 'en'
+    },
+    'therecord': {
+        'name': 'The Record (Recorded Future)',
+        'url': 'https://therecord.media/feed',
+        'language': 'en'
+    },
+    'scmagazine_threats': {
+        'name': 'SC Magazine Threats',
+        'url': 'https://www.scmagazine.com/feed/topic/threats',
+        'language': 'en'
+    },
+    'cyberscoop': {
+        'name': 'CyberScoop',
+        'url': 'https://cyberscoop.com/feed/',
+        'language': 'en'
+    },
+    'techcrunch_security': {
+        'name': 'TechCrunch Security',
+        'url': 'https://techcrunch.com/category/security/feed/',
+        'language': 'en'
+    },
+    'infosecurity_mag': {
+        'name': 'Infosecurity Magazine',
+        'url': 'https://www.infosecurity-magazine.com/rss/news/',
+        'language': 'en'
+    },
+    'globenewswire_cyber': {
+        'name': 'GlobeNewswire Cybersecurity',
+        'url': 'https://www.globenewswire.com/RssFeed/subjectcode/25-Cybersecurity/feedTitle/GlobeNewswire',
+        'language': 'en'
+    },
+    'securityweek': {
+        'name': 'SecurityWeek',
+        'url': 'https://www.securityweek.com/feed/',
+        'language': 'en'
+    },
+    'darkreading': {
+        'name': 'Dark Reading',
+        'url': 'https://www.darkreading.com/rss.xml',
+        'language': 'en'
+    },
+    'threatpost': {
+        'name': 'Threatpost',
+        'url': 'https://threatpost.com/feed/',
+        'language': 'en'
+    },
+    'grahamcluley': {
+        'name': 'Graham Cluley',
+        'url': 'https://grahamcluley.com/feed/',
+        'language': 'en'
+    },
+    'securityaffairs': {
+        'name': 'Security Affairs',
+        'url': 'https://securityaffairs.com/feed',
+        'language': 'en'
+    },
+    'theregister_security': {
+        'name': 'The Register Security',
+        'url': 'https://www.theregister.com/security/headlines.atom',
+        'language': 'en'
+    },
 }
 
 # DeepSeek API Configuration

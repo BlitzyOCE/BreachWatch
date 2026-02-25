@@ -71,7 +71,7 @@ export function BreachDetail({ breach, relatedBreaches }: BreachDetailProps) {
               <div className="mt-3 flex flex-wrap gap-2">
                 {breach.data_compromised.map((type) => (
                   <Badge key={type} variant="secondary">
-                    {type}
+                    {type.replace(/_/g, ' ')}
                   </Badge>
                 ))}
               </div>
