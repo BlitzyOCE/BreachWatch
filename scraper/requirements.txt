@@ -28,3 +28,6 @@ filelock==3.13.1
 
 # Data Validation (optional but recommended)
 pydantic>=2.6.1
+
+# Article text extraction (used by VCDB backfill)
+trafilatura>=1.8

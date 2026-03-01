@@ -18,7 +18,7 @@ function formatTagValue(tagType: TagType, tagValue: string): string {
 
 export function TagBadge({ tagType, tagValue, clickable = true }: TagBadgeProps) {
   const badge = (
-    <Badge variant="outline" className="text-xs capitalize">
+    <Badge variant="outline" className="text-xs capitalize whitespace-normal h-auto">
       {formatTagValue(tagType, tagValue)}
     </Badge>
   );
