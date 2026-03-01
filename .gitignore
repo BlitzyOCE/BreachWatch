@@ -26,7 +26,7 @@ htmlcov/
 .env
 .env.local
 .env.*.local
-# Note: .env.example should be committed (it's a template)
+
 
 # ===========================================
 # Scraper Runtime Data
@@ -54,19 +54,14 @@ Desktop.ini
 *.log
 
 # ===========================================
-# Claude Code (keep commands/, ignore rest)
+# Claude Code
 # ===========================================
 .claude/*
 !.claude/commands/
 
-# ===========================================
-# Documentation (optional - uncomment to ignore drafts)
-# ===========================================
-# docs/ideas.md
-# docs/start.md
 
 # ===========================================
-# All Markdown Files (ignore all except README.md)
+# All Markdown Files 
 # ===========================================
 *.md
 !/README.md
