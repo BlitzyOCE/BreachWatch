@@ -12,10 +12,14 @@ Usage:
 import argparse
 import csv
 import logging
+import sys
 from datetime import datetime
 from pathlib import Path
 from collections import defaultdict
 from typing import Dict, List, Optional
+
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 from db_writer import DatabaseWriter
 

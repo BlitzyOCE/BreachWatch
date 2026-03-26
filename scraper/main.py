@@ -373,6 +373,7 @@ def main():
 
         # --- Phase B: sequential dedup + write ---
         processed_urls = []
+        current_run_breach_ids = set()  # IDs written during this run, for intra-run dedup
 
         for idx, (article, classification, extracted) in enumerate(phase_a_results, 1):
             logger.info(f"\n[{idx}/{stats['articles_new']}] {article['title'][:80]}...")
@@ -427,21 +428,43 @@ def main():
                         'reasoning': 'No company name match found in full database'
                     }
                 else:
-                    logger.info(f"  + {len(candidates)} fuzzy candidate(s) found - asking AI to classify...")
-                    candidate_ids = [c['id'] for c in candidates]
-                    candidate_details = db.get_breaches_by_ids(candidate_ids)
-                    match_signals = _compute_match_signals(extracted, candidate_details)
-                    update_check = ai_processor.detect_update(article, candidate_details, match_signals)
-
-                    if not update_check:
-                        logger.warning("  X Update detection failed, treating as new breach")
+                    # Check if any candidate was written during this run with a near-identical
+                    # company name. If so, skip the AI call - it's a same-run duplicate source.
+                    same_run_match = next(
+                        (c for c in candidates
+                         if c['id'] in current_run_breach_ids
+                         and _company_similarity(company_name, c.get('company') or '') >= 0.95),
+                        None
+                    )
+                    if same_run_match:
+                        logger.info(
+                            f"  ~ Same-run duplicate detected for '{company_name}' "
+                            f"(matches breach {same_run_match['id']} written this run) -- skipping AI call"
+                        )
                         update_check = {
                             'is_update': False,
-                            'is_duplicate_source': False,
-                            'related_breach_id': None,
+                            'is_duplicate_source': True,
+                            'related_breach_id': same_run_match['id'],
                             'update_type': None,
-                            'confidence': 0.5
+                            'confidence': 1.0,
+                            'reasoning': 'Same company written earlier in this scraper run'
                         }
+                    else:
+                        logger.info(f"  + {len(candidates)} fuzzy candidate(s) found - asking AI to classify...")
+                        candidate_ids = [c['id'] for c in candidates]
+                        candidate_details = db.get_breaches_by_ids(candidate_ids)
+                        match_signals = _compute_match_signals(extracted, candidate_details)
+                        update_check = ai_processor.detect_update(article, candidate_details, match_signals)
+
+                        if not update_check:
+                            logger.warning("  X Update detection failed, treating as new breach")
+                            update_check = {
+                                'is_update': False,
+                                'is_duplicate_source': False,
+                                'related_breach_id': None,
+                                'update_type': None,
+                                'confidence': 0.5
+                            }
 
                 # Stage 4: Write to database
                 is_duplicate = update_check.get('is_duplicate_source', False)
@@ -491,6 +514,7 @@ def main():
                     if breach_id:
                         logger.info(f"  + Breach created: {breach_id}")
                         stats['breaches_created'] += 1
+                        current_run_breach_ids.add(breach_id)
 
                         # Add to stub list so within-run articles about the same
                         # company are caught by the pre-filter on subsequent iterations.
